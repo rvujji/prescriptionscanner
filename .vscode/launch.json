@@ -1,0 +1,40 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "scanner (Android Debug)",
+      "cwd": "scanner",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart", // Explicitly specify the entry point
+      "deviceId": "emulator-5554", // "android" - This tells Flutter to target an Android device/emulator
+      // If multiple Android devices/emulators are running,
+      // Flutter will prompt you to choose one.
+      // For a specific device, use its ID (e.g., "emulator-5554")
+      "args": [] // Optional: Add any arguments you need for flutter run
+    },
+    {
+      "name": "scanner",
+      "cwd": "scanner",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "scanner (profile mode)",
+      "cwd": "scanner",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "scanner (release mode)",
+      "cwd": "scanner",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}

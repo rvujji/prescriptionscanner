@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-
-import 'models/prescription.dart';
-import 'services/scanner_service.dart';
 import 'ui/prescription_home.dart';
 
 void main() async {

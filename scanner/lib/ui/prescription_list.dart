@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
-
 import '../models/prescription.dart';
 import 'image_viewer.dart';
 
