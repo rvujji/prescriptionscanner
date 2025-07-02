@@ -9,8 +9,7 @@ import 'prescription_list.dart';
 class PrescriptionHomePage extends StatefulWidget {
   final List<CameraDescription> cameras;
 
-  const PrescriptionHomePage({Key? key, required this.cameras})
-    : super(key: key);
+  const PrescriptionHomePage({super.key, required this.cameras});
 
   @override
   _PrescriptionHomePageState createState() => _PrescriptionHomePageState();

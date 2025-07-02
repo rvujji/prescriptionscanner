@@ -5,8 +5,7 @@ import 'image_viewer.dart';
 class PrescriptionListScreen extends StatelessWidget {
   final List<Prescription> prescriptions;
 
-  const PrescriptionListScreen({Key? key, required this.prescriptions})
-    : super(key: key);
+  const PrescriptionListScreen({super.key, required this.prescriptions});
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +25,7 @@ class PrescriptionListScreen extends StatelessWidget {
 class PrescriptionCard extends StatelessWidget {
   final Prescription prescription;
 
-  const PrescriptionCard({Key? key, required this.prescription})
-    : super(key: key);
+  const PrescriptionCard({super.key, required this.prescription});
 
   @override
   Widget build(BuildContext context) {

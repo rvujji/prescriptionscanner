@@ -4,8 +4,7 @@ import 'dart:io';
 class ImageViewerScreen extends StatelessWidget {
   final String imagePath;
 
-  const ImageViewerScreen({Key? key, required this.imagePath})
-    : super(key: key);
+  const ImageViewerScreen({super.key, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {

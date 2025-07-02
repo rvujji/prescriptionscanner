@@ -11,8 +11,7 @@ void main() async {
 class PrescriptionScannerApp extends StatelessWidget {
   final List<CameraDescription> cameras;
 
-  const PrescriptionScannerApp({Key? key, required this.cameras})
-    : super(key: key);
+  const PrescriptionScannerApp({super.key, required this.cameras});
 
   @override
   Widget build(BuildContext context) {
