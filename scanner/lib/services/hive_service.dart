@@ -10,6 +10,10 @@ class HiveService {
     await Hive.initFlutter();
     Hive.registerAdapter(PrescriptionAdapter());
     Hive.registerAdapter(MedicationAdapter());
+    Hive.registerAdapter(DosageAdapter());
+    Hive.registerAdapter(AdministrationTimeAdapter());
+    Hive.registerAdapter(DosageUnitAdapter());
+    Hive.registerAdapter(TimeUnitAdapter());
     await Hive.openBox<Prescription>(_prescriptionBoxName);
   }
 
@@ -19,7 +23,29 @@ class HiveService {
 
   static Future<void> savePrescription(Prescription prescription) async {
     final box = getPrescriptionBox();
-    await box.add(prescription);
+
+    // Create a DEEP COPY of the prescription before saving
+    final prescriptionCopy = Prescription(
+      id: prescription.id,
+      date: prescription.date,
+      patientName: prescription.patientName,
+      doctorName: prescription.doctorName,
+      medications:
+          prescription.medications
+              .map(
+                (m) => Medication(
+                  name: m.name,
+                  dosage: m.dosage,
+                  times: m.times,
+                  duration: m.duration,
+                ),
+              )
+              .toList(),
+      notes: prescription.notes,
+      imagePath: prescription.imagePath,
+    );
+
+    await box.put(prescriptionCopy.id, prescriptionCopy);
   }
 
   static List<Prescription> getAllPrescriptions() {

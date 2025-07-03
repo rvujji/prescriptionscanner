@@ -2,9 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'widgets/prescription_list.dart';
 import 'services/hive_service.dart';
+import 'package:logging/logging.dart';
 
+final Logger _appLogger = Logger('MyApp');
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Configure logging
+  Logger.root.level =
+      Level
+          .ALL; // Set to Level.ALL for full debugging, or Level.INFO, Level.WARNING, etc.
+  Logger.root.onRecord.listen((record) {
+    // Print logs to the console
+    print(
+      '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}',
+    );
+    if (record.error != null) {
+      print('Error: ${record.error}');
+    }
+    if (record.stackTrace != null) {
+      print('StackTrace: ${record.stackTrace}');
+    }
+  });
+  
   await HiveService.init();
 
   final cameras = await availableCameras();
@@ -26,6 +45,7 @@ class PrescriptionScannerApp extends StatelessWidget {
       ),
       home: PrescriptionListScreen(
         initialPrescriptions: HiveService.getAllPrescriptions(),
+        cameras: cameras,
       ),
     );
   }

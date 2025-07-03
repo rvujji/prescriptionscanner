@@ -6,30 +6,27 @@ import '../models/prescription.dart';
 import '../services/scanner_service.dart';
 import 'prescription_list.dart';
 
-class PrescriptionHomePage extends StatefulWidget {
+class PrescriptionAddPage extends StatefulWidget {
   final List<CameraDescription> cameras;
 
-  const PrescriptionHomePage({super.key, required this.cameras});
+  const PrescriptionAddPage({super.key, required this.cameras});
 
   @override
-  _PrescriptionHomePageState createState() => _PrescriptionHomePageState();
+  State<PrescriptionAddPage> createState() => _PrescriptionAddPageState();
 }
 
-class _PrescriptionHomePageState extends State<PrescriptionHomePage> {
+class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
   final _scanner = MLKitPrescriptionScanner();
   final _parser = PrescriptionParser();
   final _imagePicker = ImagePicker();
-
-  List<Prescription> _prescriptions = [];
+  final List<Prescription> _prescriptions = [];
   bool _isLoading = false;
 
   Future<void> _scanFromCamera() async {
     setState(() => _isLoading = true);
     try {
       final image = await _imagePicker.pickImage(source: ImageSource.camera);
-      if (image != null) {
-        await _processImage(image.path);
-      }
+      if (image != null) await _processImage(image.path);
     } catch (e) {
       _showError('Failed to capture image: $e');
     } finally {
@@ -41,9 +38,7 @@ class _PrescriptionHomePageState extends State<PrescriptionHomePage> {
     setState(() => _isLoading = true);
     try {
       final image = await _imagePicker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        await _processImage(image.path);
-      }
+      if (image != null) await _processImage(image.path);
     } catch (e) {
       _showError('Failed to pick image: $e');
     } finally {
@@ -57,9 +52,8 @@ class _PrescriptionHomePageState extends State<PrescriptionHomePage> {
       if (text != null && text.isNotEmpty) {
         final prescription = _parser.parseFromText(text, imagePath);
         await HiveService.savePrescription(prescription);
-        setState(() {
-          _prescriptions.add(prescription);
-        });
+        setState(() => _prescriptions.add(prescription));
+        Navigator.pop(context, prescription);
       } else {
         _showError('No text could be extracted from the image');
       }
@@ -77,25 +71,7 @@ class _PrescriptionHomePageState extends State<PrescriptionHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Prescription Scanner'),
-        actions: [
-          if (_prescriptions.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.list),
-              onPressed:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => PrescriptionListScreen(
-                            initialPrescriptions: _prescriptions,
-                          ),
-                    ),
-                  ),
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Prescription Scanner')),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())

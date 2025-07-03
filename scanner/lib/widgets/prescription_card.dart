@@ -152,36 +152,32 @@ class _PrescriptionCardState extends State<PrescriptionCard> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            ..._editablePrescription.medications
-                .map(
-                  (med) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.medication, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                med.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                '${med.dosage} • ${med.frequency} • ${med.duration}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
+            ..._editablePrescription.medications.map(
+              (med) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.medication, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            med.name,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
-                        ),
-                      ],
+                          Text(
+                            med.format(), // Using the format() method from Medication
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                )
-                .toList(),
+                  ],
+                ),
+              ),
+            ),
           ],
         ],
       ),
@@ -196,33 +192,31 @@ class _PrescriptionCardState extends State<PrescriptionCard> {
           'Medications:',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        ..._editablePrescription.medications
-            .map(
-              (med) => MedicationEditor(
-                medication: med,
-                onRemove:
-                    () => setState(() {
-                      _editablePrescription.medications.remove(med);
-                    }),
-                onChanged:
-                    (updatedMed) => setState(() {
-                      final index = _editablePrescription.medications.indexOf(
-                        med,
-                      );
-                      _editablePrescription.medications[index] = updatedMed;
-                    }),
-              ),
-            )
-            .toList(),
+        ..._editablePrescription.medications.map(
+          (med) => MedicationEditor(
+            medication: med,
+            onRemove:
+                () => setState(() {
+                  _editablePrescription.medications.remove(med);
+                }),
+            onChanged:
+                (updatedMed) => setState(() {
+                  final index = _editablePrescription.medications.indexOf(med);
+                  _editablePrescription.medications[index] = updatedMed;
+                }),
+          ),
+        ),
         TextButton(
           onPressed:
               () => setState(() {
                 _editablePrescription.medications.add(
                   Medication(
                     name: 'New Medication',
-                    dosage: '',
-                    frequency: '',
-                    duration: '',
+                    dosage: Dosage(quantity: 1, unit: DosageUnit.tablet),
+                    times: [
+                      AdministrationTime(frequency: 1, unit: TimeUnit.day),
+                    ],
+                    duration: '7 days',
                   ),
                 );
               }),
