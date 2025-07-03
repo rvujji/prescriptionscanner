@@ -22,10 +22,13 @@ class _MedicationEditorState extends State<MedicationEditor> {
   late TextEditingController _quantityController;
   late TextEditingController _customUnitController;
   late TextEditingController _timesController;
+  late TextEditingController _durationNumberController;
+  TimeUnit? _durationUnit;
 
   @override
   void initState() {
     super.initState();
+
     _quantityController = TextEditingController(
       text: widget.medication.dosage.quantity.toString(),
     );
@@ -36,10 +39,14 @@ class _MedicationEditorState extends State<MedicationEditor> {
       text: widget.medication.times
           .map(
             (t) =>
-                '${t.frequency} ${t.unit.name}${t.specificTimes != null ? ' (${t.specificTimes})' : ''}',
+                '${t.frequency} ${t.unit.name} at ${t.specificTimes.join(', ')}',
           )
           .join(', '),
     );
+    _durationNumberController = TextEditingController(
+      text: widget.medication.duration.number?.toString() ?? '',
+    );
+    _durationUnit = widget.medication.duration.unit;
   }
 
   @override
@@ -112,14 +119,15 @@ class _MedicationEditorState extends State<MedicationEditor> {
                 child: TextFormField(
                   controller: _customUnitController,
                   decoration: const InputDecoration(labelText: 'Custom Unit'),
-                  onChanged:
-                      (value) => widget.onChanged(
-                        widget.medication.copyWith(
-                          dosage: widget.medication.dosage.copyWith(
-                            customUnit: value,
-                          ),
+                  onChanged: (value) {
+                    widget.onChanged(
+                      widget.medication.copyWith(
+                        dosage: widget.medication.dosage.copyWith(
+                          customUnit: value,
                         ),
                       ),
+                    );
+                  },
                 ),
               ),
             const SizedBox(height: 16),
@@ -136,14 +144,45 @@ class _MedicationEditorState extends State<MedicationEditor> {
               onTap: _editTimes,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              initialValue: widget.medication.duration,
-              decoration: const InputDecoration(labelText: 'Duration'),
-              onChanged:
-                  (value) => widget.onChanged(
-                    widget.medication.copyWith(duration: value),
+            const Text('Duration'),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _durationNumberController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Number'),
+                    onChanged: (value) => _updateDuration(),
                   ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<TimeUnit>(
+                    value: _durationUnit,
+                    items: [
+                      ...TimeUnit.values.map(
+                        (unit) => DropdownMenuItem(
+                          value: unit,
+                          child: Text(unit.name),
+                        ),
+                      ),
+                      const DropdownMenuItem<TimeUnit>(
+                        value: null,
+                        child: Text('Forever'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _durationUnit = value;
+                      });
+                      _updateDuration();
+                    },
+                    decoration: const InputDecoration(labelText: 'Unit'),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
@@ -155,6 +194,15 @@ class _MedicationEditorState extends State<MedicationEditor> {
         ),
       ),
     );
+  }
+
+  void _updateDuration() {
+    final number = int.tryParse(_durationNumberController.text);
+    final duration =
+        (_durationUnit == null || number == null)
+            ? DurationPeriod.forever()
+            : DurationPeriod(number: number, unit: _durationUnit);
+    widget.onChanged(widget.medication.copyWith(duration: duration));
   }
 
   Future<void> _editTimes() async {
@@ -169,7 +217,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
       _timesController.text = result
           .map(
             (t) =>
-                '${t.frequency} ${t.unit.name}${t.specificTimes != null ? ' (${t.specificTimes})' : ''}',
+                '${t.frequency} ${t.unit.name} at ${t.specificTimes.join(', ')}',
           )
           .join(', ');
     }
@@ -180,6 +228,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
     _quantityController.dispose();
     _customUnitController.dispose();
     _timesController.dispose();
+    _durationNumberController.dispose();
     super.dispose();
   }
 }

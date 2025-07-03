@@ -16,7 +16,7 @@ class Medication {
   List<AdministrationTime> times;
 
   @HiveField(3)
-  String duration;
+  DurationPeriod duration;
 
   Medication({
     required this.name,
@@ -36,7 +36,7 @@ class Medication {
     String? name,
     Dosage? dosage,
     List<AdministrationTime>? times,
-    String? duration,
+    DurationPeriod? duration,
   }) {
     return Medication(
       name: name ?? this.name,
@@ -46,7 +46,6 @@ class Medication {
     );
   }
 
-  // Formatting method
   String format() {
     final dosageStr =
         dosage.unit == DosageUnit.other
@@ -54,12 +53,13 @@ class Medication {
             : '${dosage.quantity} ${dosage.unit.name}';
 
     final timesStr = times
-        .map((t) {
-          return '${t.frequency}×/${t.unit.name}${t.specificTimes != null ? ' at ${t.specificTimes}' : ''}';
-        })
+        .map(
+          (t) =>
+              '${t.frequency}×/${t.unit.name} at ${t.specificTimes.join(', ')}',
+        )
         .join(', ');
 
-    return '$name ($dosageStr, $timesStr, for $duration)';
+    return '$name ($dosageStr, $timesStr, for ${duration.format()})';
   }
 }
 
@@ -98,12 +98,12 @@ class AdministrationTime {
   final TimeUnit unit;
 
   @HiveField(2)
-  final String? specificTimes;
+  final List<String> specificTimes; // ⬅️ Store as ["08:00", "13:00", ...]
 
   AdministrationTime({
     required this.frequency,
     required this.unit,
-    this.specificTimes,
+    required this.specificTimes,
   });
 
   factory AdministrationTime.fromJson(Map<String, dynamic> json) =>
@@ -113,7 +113,7 @@ class AdministrationTime {
   AdministrationTime copyWith({
     int? frequency,
     TimeUnit? unit,
-    String? specificTimes,
+    List<String>? specificTimes,
   }) {
     return AdministrationTime(
       frequency: frequency ?? this.frequency,
@@ -155,4 +155,27 @@ enum TimeUnit {
   week,
   @HiveField(3)
   month,
+}
+
+@HiveType(typeId: 6)
+@JsonSerializable()
+class DurationPeriod {
+  @HiveField(0)
+  final int? number;
+
+  @HiveField(1)
+  final TimeUnit? unit;
+
+  DurationPeriod({this.number, this.unit});
+
+  factory DurationPeriod.forever() => DurationPeriod(number: null, unit: null);
+
+  bool get isForever => number == null || unit == null;
+
+  String format() =>
+      isForever ? 'forever' : '$number ${unit!.name}${number! > 1 ? 's' : ''}';
+
+  factory DurationPeriod.fromJson(Map<String, dynamic> json) =>
+      _$DurationPeriodFromJson(json);
+  Map<String, dynamic> toJson() => _$DurationPeriodToJson(this);
 }

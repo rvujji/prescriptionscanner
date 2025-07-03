@@ -59,12 +59,13 @@ class _PrescriptionCardState extends State<PrescriptionCard> {
         ? TextFormField(
           initialValue: _editablePrescription.patientName,
           decoration: const InputDecoration(labelText: 'Patient Name'),
-          onChanged:
-              (value) => setState(() {
-                _editablePrescription = _editablePrescription.copyWith(
-                  patientName: value,
-                );
-              }),
+          onChanged: (value) {
+            setState(() {
+              _editablePrescription = _editablePrescription.copyWith(
+                patientName: value,
+              );
+            });
+          },
         )
         : Text(
           _editablePrescription.patientName,
@@ -80,12 +81,13 @@ class _PrescriptionCardState extends State<PrescriptionCard> {
             TextFormField(
               initialValue: _editablePrescription.doctorName,
               decoration: const InputDecoration(labelText: 'Doctor Name'),
-              onChanged:
-                  (value) => setState(() {
-                    _editablePrescription = _editablePrescription.copyWith(
-                      doctorName: value,
-                    );
-                  }),
+              onChanged: (value) {
+                setState(() {
+                  _editablePrescription = _editablePrescription.copyWith(
+                    doctorName: value,
+                  );
+                });
+              },
             ),
             TextFormField(
               initialValue: _editablePrescription.date.toString().split(' ')[0],
@@ -129,12 +131,13 @@ class _PrescriptionCardState extends State<PrescriptionCard> {
               initialValue: _editablePrescription.notes,
               maxLines: 3,
               decoration: const InputDecoration(labelText: 'Notes'),
-              onChanged:
-                  (value) => setState(() {
-                    _editablePrescription = _editablePrescription.copyWith(
-                      notes: value,
-                    );
-                  }),
+              onChanged: (value) {
+                setState(() {
+                  _editablePrescription = _editablePrescription.copyWith(
+                    notes: value,
+                  );
+                });
+              },
             ),
             const SizedBox(height: 16),
             _buildMedicationsEditor(),
@@ -168,7 +171,7 @@ class _PrescriptionCardState extends State<PrescriptionCard> {
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           Text(
-                            med.format(), // Using the format() method from Medication
+                            med.format(),
                             style: const TextStyle(fontSize: 12),
                           ),
                         ],
@@ -214,9 +217,13 @@ class _PrescriptionCardState extends State<PrescriptionCard> {
                     name: 'New Medication',
                     dosage: Dosage(quantity: 1, unit: DosageUnit.tablet),
                     times: [
-                      AdministrationTime(frequency: 1, unit: TimeUnit.day),
+                      AdministrationTime(
+                        frequency: 1,
+                        unit: TimeUnit.day,
+                        specificTimes: ['08:00'],
+                      ),
                     ],
-                    duration: '7 days',
+                    duration: DurationPeriod(number: 7, unit: TimeUnit.day),
                   ),
                 );
               }),

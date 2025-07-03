@@ -20,7 +20,7 @@ class MedicationAdapter extends TypeAdapter<Medication> {
       name: fields[0] as String,
       dosage: fields[1] as Dosage,
       times: (fields[2] as List).cast<AdministrationTime>(),
-      duration: fields[3] as String,
+      duration: fields[3] as DurationPeriod,
     );
   }
 
@@ -102,7 +102,7 @@ class AdministrationTimeAdapter extends TypeAdapter<AdministrationTime> {
     return AdministrationTime(
       frequency: fields[0] as int,
       unit: fields[1] as TimeUnit,
-      specificTimes: fields[2] as String?,
+      specificTimes: (fields[2] as List).cast<String>(),
     );
   }
 
@@ -125,6 +125,43 @@ class AdministrationTimeAdapter extends TypeAdapter<AdministrationTime> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is AdministrationTimeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class DurationPeriodAdapter extends TypeAdapter<DurationPeriod> {
+  @override
+  final int typeId = 6;
+
+  @override
+  DurationPeriod read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return DurationPeriod(
+      number: fields[0] as int?,
+      unit: fields[1] as TimeUnit?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, DurationPeriod obj) {
+    writer
+      ..writeByte(2)
+      ..writeByte(0)
+      ..write(obj.number)
+      ..writeByte(1)
+      ..write(obj.unit);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DurationPeriodAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
@@ -262,7 +299,8 @@ Medication _$MedicationFromJson(Map<String, dynamic> json) => Medication(
       times: (json['times'] as List<dynamic>)
           .map((e) => AdministrationTime.fromJson(e as Map<String, dynamic>))
           .toList(),
-      duration: json['duration'] as String,
+      duration:
+          DurationPeriod.fromJson(json['duration'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$MedicationToJson(Medication instance) =>
@@ -301,7 +339,9 @@ AdministrationTime _$AdministrationTimeFromJson(Map<String, dynamic> json) =>
     AdministrationTime(
       frequency: (json['frequency'] as num).toInt(),
       unit: $enumDecode(_$TimeUnitEnumMap, json['unit']),
-      specificTimes: json['specificTimes'] as String?,
+      specificTimes: (json['specificTimes'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$AdministrationTimeToJson(AdministrationTime instance) =>
@@ -317,3 +357,15 @@ const _$TimeUnitEnumMap = {
   TimeUnit.week: 'week',
   TimeUnit.month: 'month',
 };
+
+DurationPeriod _$DurationPeriodFromJson(Map<String, dynamic> json) =>
+    DurationPeriod(
+      number: (json['number'] as num?)?.toInt(),
+      unit: $enumDecodeNullable(_$TimeUnitEnumMap, json['unit']),
+    );
+
+Map<String, dynamic> _$DurationPeriodToJson(DurationPeriod instance) =>
+    <String, dynamic>{
+      'number': instance.number,
+      'unit': _$TimeUnitEnumMap[instance.unit],
+    };

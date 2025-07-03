@@ -14,6 +14,7 @@ class HiveService {
     Hive.registerAdapter(AdministrationTimeAdapter());
     Hive.registerAdapter(DosageUnitAdapter());
     Hive.registerAdapter(TimeUnitAdapter());
+    Hive.registerAdapter(DurationPeriodAdapter());
     await Hive.openBox<Prescription>(_prescriptionBoxName);
   }
 
