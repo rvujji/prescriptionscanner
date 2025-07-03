@@ -1,11 +1,43 @@
-class Prescription {
-  final String id;
-  final DateTime date;
-  final String patientName;
-  final String doctorName;
-  final List<Medication> medications;
-  final String? notes;
-  final String? imagePath;
+import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
+import 'medication.dart'; // Import your Medication model
+
+part 'prescription.g.dart'; // For Hive TypeAdapter
+
+@HiveType(typeId: 0) // Unique ID for Hive (must be different from Medication)
+@JsonSerializable() // Annotation for JSON serialization
+class Prescription extends HiveObject {
+  @HiveField(0)
+  @JsonKey(name: 'id') // Optional: if JSON key differs from Dart field name
+  String id; // Use String for server IDs
+
+  @HiveField(1)
+  @JsonKey(name: 'date')
+  DateTime date; // json_serializable handles DateTime to ISO 8601 string and back
+
+  @HiveField(2)
+  @JsonKey(name: 'patient_name') // Example: JSON key might be snake_case
+  String patientName;
+
+  @HiveField(3)
+  @JsonKey(name: 'doctor_name')
+  String doctorName;
+
+  @HiveField(4)
+  @JsonKey(name: 'medications')
+  List<Medication> medications; // json_serializable automatically handles nested @JsonSerializable classes
+
+  @HiveField(5)
+  @JsonKey(name: 'notes')
+  String notes;
+
+  @HiveField(6)
+  // imagePath is typically a local file path.
+  // For the server, you would upload the image separately and store a URL.
+  // So, you might NOT want to send this field directly in the JSON.
+  // If you want to omit it from JSON, use @JsonKey(ignore: true)
+  // If you want to send it but expect a URL from server, consider a separate field for URL.
+  String imagePath;
 
   Prescription({
     required this.id,
@@ -13,36 +45,17 @@ class Prescription {
     required this.patientName,
     required this.doctorName,
     required this.medications,
-    this.notes,
-    this.imagePath,
+    required this.notes,
+    required this.imagePath,
   });
 
-  factory Prescription.fromJson(Map<String, dynamic> json) {
-    return Prescription(
-      id: json['id'],
-      date: DateTime.parse(json['date']),
-      patientName: json['patientName'],
-      doctorName: json['doctorName'],
-      medications:
-          (json['medications'] as List)
-              .map((item) => Medication.fromJson(item))
-              .toList(),
-      notes: json['notes'],
-      imagePath: json['imagePath'],
-    );
-  }
+  // --- JSON Serialization Methods ---
+  // A factory constructor to create a Prescription from a JSON map
+  factory Prescription.fromJson(Map<String, dynamic> json) =>
+      _$PrescriptionFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'date': date.toIso8601String(),
-      'patientName': patientName,
-      'doctorName': doctorName,
-      'medications': medications.map((med) => med.toJson()).toList(),
-      'notes': notes,
-      'imagePath': imagePath,
-    };
-  }
+  // A method to convert a Prescription object to a JSON map
+  Map<String, dynamic> toJson() => _$PrescriptionToJson(this);
 
   Prescription copyWith({
     String? id,
@@ -62,37 +75,5 @@ class Prescription {
       notes: notes ?? this.notes,
       imagePath: imagePath ?? this.imagePath,
     );
-  }
-}
-
-class Medication {
-  final String name;
-  final String dosage;
-  final String frequency;
-  final String duration;
-
-  Medication({
-    required this.name,
-    required this.dosage,
-    required this.frequency,
-    required this.duration,
-  });
-
-  factory Medication.fromJson(Map<String, dynamic> json) {
-    return Medication(
-      name: json['name'],
-      dosage: json['dosage'],
-      frequency: json['frequency'],
-      duration: json['duration'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'dosage': dosage,
-      'frequency': frequency,
-      'duration': duration,
-    };
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
-
+import '../services/hive_service.dart';
 import '../models/prescription.dart';
 import '../services/scanner_service.dart';
 import 'prescription_list.dart';
@@ -55,9 +55,10 @@ class _PrescriptionHomePageState extends State<PrescriptionHomePage> {
     try {
       final text = await _scanner.scanImage(imagePath);
       if (text != null && text.isNotEmpty) {
-        final prescription = _parser.parseFromText(text);
+        final prescription = _parser.parseFromText(text, imagePath);
+        await HiveService.savePrescription(prescription);
         setState(() {
-          _prescriptions.add(prescription.copyWith(imagePath: imagePath));
+          _prescriptions.add(prescription);
         });
       } else {
         _showError('No text could be extracted from the image');
@@ -88,7 +89,7 @@ class _PrescriptionHomePageState extends State<PrescriptionHomePage> {
                     MaterialPageRoute(
                       builder:
                           (context) => PrescriptionListScreen(
-                            prescriptions: _prescriptions,
+                            initialPrescriptions: _prescriptions,
                           ),
                     ),
                   ),

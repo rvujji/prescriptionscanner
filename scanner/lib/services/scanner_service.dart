@@ -1,5 +1,6 @@
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import '../models/prescription.dart';
+import '../models/medication.dart';
 
 abstract class PrescriptionScanner {
   Future<String?> scanImage(String imagePath);
@@ -23,7 +24,7 @@ class MLKitPrescriptionScanner implements PrescriptionScanner {
 }
 
 class PrescriptionParser {
-  Prescription parseFromText(String text) {
+  Prescription parseFromText(String text, String imagePath) {
     final lines = text.split('\n');
     String patientName = '';
     String doctorName = '';
@@ -58,6 +59,7 @@ class PrescriptionParser {
       doctorName: doctorName.isNotEmpty ? doctorName : 'Unknown Doctor',
       medications: medications,
       notes: 'Automatically scanned prescription',
+      imagePath: imagePath, // Image path can be set later if needed
     );
   }
 }
