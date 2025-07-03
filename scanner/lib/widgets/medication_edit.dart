@@ -151,7 +151,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
                   child: TextFormField(
                     controller: _durationNumberController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Number'),
+                    decoration: const InputDecoration(labelText: 'For'),
                     onChanged: (value) => _updateDuration(),
                   ),
                 ),
@@ -177,7 +177,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
                       });
                       _updateDuration();
                     },
-                    decoration: const InputDecoration(labelText: 'Unit'),
+                    decoration: const InputDecoration(labelText: ''),
                   ),
                 ),
               ],

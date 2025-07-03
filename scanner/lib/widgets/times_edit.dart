@@ -89,7 +89,9 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                                 });
                               }
                             },
-                            decoration: const InputDecoration(labelText: ''),
+                            decoration: const InputDecoration(
+                              labelText: 'Unit',
+                            ),
                           ),
                         ),
                         IconButton(
@@ -103,22 +105,23 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                         ),
                       ],
                     ),
-                    TextFormField(
-                      controller: controller,
-                      decoration: const InputDecoration(
-                        labelText: 'at (e.g., 08:00, 13:00)',
-                      ),
-                      onChanged: (value) {
-                        final times =
-                            value
-                                .split(',')
-                                .map((t) => t.trim())
-                                .where((t) => t.isNotEmpty)
-                                .toList();
-                        _times[index] = _times[index].copyWith(
-                          specificTimes: times,
-                        );
-                      },
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: controller,
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Times (24-hr)',
+                              hintText: 'e.g., 08:00, 13:00',
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.access_time),
+                          onPressed: () => _pickTime(index, controller),
+                        ),
+                      ],
                     ),
                     const Divider(),
                   ],
@@ -155,5 +158,35 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
         ),
       ],
     );
+  }
+
+  Future<void> _pickTime(int index, TextEditingController controller) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder:
+          (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+            child: child!,
+          ),
+    );
+
+    if (picked != null) {
+      final formatted = _formatTime(picked);
+      final current = controller.text.trim();
+      final updatedText = current.isEmpty ? formatted : '$current, $formatted';
+      setState(() {
+        controller.text = updatedText;
+        _times[index] = _times[index].copyWith(
+          specificTimes: updatedText.split(',').map((e) => e.trim()).toList(),
+        );
+      });
+    }
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 }
