@@ -83,7 +83,7 @@ class PrescriptionParser {
     final name = parts.isNotEmpty ? parts[0] : 'Unknown';
 
     final dosage = _parseDosage(parts.length > 1 ? parts[1] : '1 tablet');
-    final times = _parseTimes(parts.length > 2 ? parts[2] : '1x/day');
+    final times = _parseTimes(parts.length > 2 ? parts[2] : '1 per day');
     final duration = _parseDuration(parts.length > 3 ? parts[3] : '7 days');
 
     return Medication(

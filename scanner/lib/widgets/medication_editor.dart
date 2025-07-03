@@ -47,7 +47,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
     return times
         .map(
           (t) =>
-              '${t.frequency}×/${t.unit.name} at ${t.specificTimes.join(', ')}',
+              '${t.frequency}/${t.unit.name} at ${t.specificTimes.join(', ')}',
         )
         .join(', ');
   }
@@ -148,7 +148,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
               controller: _timesController,
               readOnly: true,
               decoration: InputDecoration(
-                labelText: 'Administration Times',
+                labelText: 'Dose Times',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: _editTimes,

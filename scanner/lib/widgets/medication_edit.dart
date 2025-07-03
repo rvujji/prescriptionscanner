@@ -39,7 +39,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
       text: widget.medication.times
           .map(
             (t) =>
-                '${t.frequency} ${t.unit.name} at ${t.specificTimes.join(', ')}',
+                '${t.frequency}/${t.unit.name} at ${t.specificTimes.join(', ')}',
           )
           .join(', '),
     );
@@ -134,7 +134,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
             TextFormField(
               controller: _timesController,
               decoration: InputDecoration(
-                labelText: 'Administration Times',
+                labelText: 'Dose Times',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: _editTimes,
@@ -217,7 +217,7 @@ class _MedicationEditorState extends State<MedicationEditor> {
       _timesController.text = result
           .map(
             (t) =>
-                '${t.frequency} ${t.unit.name} at ${t.specificTimes.join(', ')}',
+                '${t.frequency}/${t.unit.name} at ${t.specificTimes.join(', ')}',
           )
           .join(', ');
     }

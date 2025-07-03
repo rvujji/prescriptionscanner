@@ -42,7 +42,7 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit Administration Times'),
+      title: const Text('Edit Dose Times'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -63,7 +63,7 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                             initialValue: time.frequency.toString(),
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Frequency',
+                              labelText: 'Every',
                             ),
                             onChanged: (value) {
                               final freq = int.tryParse(value) ?? 1;
@@ -89,9 +89,7 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                                 });
                               }
                             },
-                            decoration: const InputDecoration(
-                              labelText: 'Unit',
-                            ),
+                            decoration: const InputDecoration(labelText: ''),
                           ),
                         ),
                         IconButton(
@@ -108,7 +106,7 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                     TextFormField(
                       controller: controller,
                       decoration: const InputDecoration(
-                        labelText: 'Specific Times (e.g., 08:00, 13:00)',
+                        labelText: 'at (e.g., 08:00, 13:00)',
                       ),
                       onChanged: (value) {
                         final times =

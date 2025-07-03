@@ -55,7 +55,7 @@ class Medication {
     final timesStr = times
         .map(
           (t) =>
-              '${t.frequency}×/${t.unit.name} at ${t.specificTimes.join(', ')}',
+              '${t.frequency}/${t.unit.name} at ${t.specificTimes.join(', ')}',
         )
         .join(', ');
 
