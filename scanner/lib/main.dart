@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:logging/logging.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'widgets/prescription_list.dart';
 import 'services/hive_service.dart';
-import 'package:logging/logging.dart';
+import 'services/notification_service.dart';
+import 'services/medication_scheduler.dart';
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,18 +19,37 @@ void main() async {
     print(
       '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}',
     );
-    if (record.error != null) {
-      print('Error: ${record.error}');
-    }
-    if (record.stackTrace != null) {
-      print('StackTrace: ${record.stackTrace}');
-    }
   });
 
   await HiveService.init();
-
+  final medicationScheduler = MedicationScheduler(
+    HiveService.getPrescriptionBox(),
+  );
+  await medicationScheduler.initialize();
+  await requestNotificationPermission();
+  await medicationScheduler.scheduleAllMedications();
   final cameras = await availableCameras();
-  runApp(PrescriptionScannerApp(cameras: cameras));
+  runZonedGuarded(
+    () {
+      runApp(PrescriptionScannerApp(cameras: cameras));
+    },
+    (error, stackTrace) {
+      Logger('Global').severe('Uncaught error', error, stackTrace);
+    },
+  );
+}
+
+Future<void> requestNotificationPermission() async {
+  final status = await Permission.notification.status;
+
+  if (!status.isGranted) {
+    final result = await Permission.notification.request();
+    if (result.isGranted) {
+      print("🔔 Notification permission granted.");
+    } else {
+      print("🚫 Notification permission denied.");
+    }
+  }
 }
 
 class PrescriptionScannerApp extends StatelessWidget {

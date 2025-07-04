@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import '../models/prescription.dart';
 import '../models/medication.dart';
+import 'medication_scheduler.dart';
 
 final Logger _logger = Logger('HiveService');
 
@@ -61,6 +62,11 @@ class HiveService {
       );
 
       await box.put(prescriptionCopy.id, prescriptionCopy);
+      final medicationScheduler = MedicationScheduler(getPrescriptionBox());
+      await medicationScheduler.scheduleMedicationsForPrescription(
+        prescriptionCopy,
+      );
+
       _logger.info('Prescription [${prescription.id}] saved successfully.');
     } catch (e, stackTrace) {
       _logger.severe(

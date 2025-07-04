@@ -180,6 +180,66 @@ class MedicationScheduler {
     }
   }
 
+  Future<void> scheduleMedicationsForPrescription(
+    Prescription prescription,
+  ) async {
+    try {
+      developer.log(
+        'Scheduling updated prescription: ${prescription.id}',
+        name: _logTag,
+      );
+
+      // Cancel existing notifications for this prescription
+      await _cancelNotificationsForPrescription(prescription);
+
+      int totalScheduled = 0;
+
+      for (final medication in prescription.medications) {
+        final baseId = _getBaseNotificationId(prescription.id, medication.id);
+        int notificationId = baseId;
+
+        for (final adminTime in medication.times) {
+          final scheduledTimes = adminTime.getAllScheduledTimes(
+            prescription.date,
+            medication.duration,
+          );
+
+          for (final scheduledTime in scheduledTimes) {
+            if (scheduledTime.isBefore(DateTime.now())) continue;
+
+            await _notificationService.scheduleMedicationNotification(
+              id: notificationId++,
+              title: 'Time to take ${medication.name}',
+              body:
+                  'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
+              scheduledTime: scheduledTime,
+            );
+
+            developer.log(
+              'Scheduled: prescription=${prescription.id}, medication=${medication.id}, time=$scheduledTime, id=${notificationId - 1}',
+              name: _logTag,
+            );
+
+            totalScheduled++;
+          }
+        }
+      }
+
+      developer.log(
+        'Total newly scheduled notifications: $totalScheduled',
+        name: _logTag,
+      );
+    } catch (e, stackTrace) {
+      developer.log(
+        'Scheduling updated prescription failed: $e',
+        name: _logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   /// Creates a base ID using a combined hash of prescription and medication IDs.
   int _getBaseNotificationId(String prescriptionId, String medicationId) {
     return (prescriptionId + medicationId).hashCode.abs() % 1000000;

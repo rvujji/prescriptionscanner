@@ -6,7 +6,6 @@ import 'package:logging/logging.dart';
 import '../services/hive_service.dart';
 import '../models/prescription.dart';
 import '../services/scanner_service.dart';
-import 'prescription_list.dart';
 
 final Logger _logger = Logger('PrescriptionAddPage');
 
