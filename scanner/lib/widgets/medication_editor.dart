@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import '../models/medication.dart';
 import 'times_edit.dart';
+import 'dart:developer' as developer;
 
 class MedicationEditor extends StatefulWidget {
   final Medication medication;
   final VoidCallback onRemove;
   final ValueChanged<Medication> onChanged;
+  final Function(String)? onScheduleUpdate; // Add this callback
 
   const MedicationEditor({
     super.key,
     required this.medication,
     required this.onRemove,
     required this.onChanged,
+    this.onScheduleUpdate, // Add this parameter
   });
 
   @override
@@ -24,10 +27,16 @@ class _MedicationEditorState extends State<MedicationEditor> {
   late TextEditingController _timesController;
   late TextEditingController _durationNumberController;
   TimeUnit? _durationUnit;
+  final String _logTag = 'MedicationEditor';
 
   @override
   void initState() {
     super.initState();
+    developer.log(
+      'Initializing MedicationEditor for ${widget.medication.name}',
+      name: _logTag,
+    );
+
     _quantityController = TextEditingController(
       text: widget.medication.dosage.quantity.toString(),
     );
@@ -53,12 +62,37 @@ class _MedicationEditorState extends State<MedicationEditor> {
   }
 
   void _updateDuration() {
-    final number = int.tryParse(_durationNumberController.text);
-    final duration =
-        (_durationUnit == null || number == null)
-            ? DurationPeriod.forever()
-            : DurationPeriod(number: number, unit: _durationUnit);
-    widget.onChanged(widget.medication.copyWith(duration: duration));
+    try {
+      final number = int.tryParse(_durationNumberController.text);
+      final duration =
+          (_durationUnit == null || number == null)
+              ? DurationPeriod.forever()
+              : DurationPeriod(number: number, unit: _durationUnit);
+
+      developer.log(
+        'Updating duration for ${widget.medication.name}',
+        name: _logTag,
+      );
+
+      final updatedMedication = widget.medication.copyWith(duration: duration);
+      widget.onChanged(updatedMedication);
+
+      // Trigger schedule update if this medication is part of a prescription
+      if (widget.onScheduleUpdate != null) {
+        developer.log(
+          'Triggering schedule update for medication change',
+          name: _logTag,
+        );
+        widget.onScheduleUpdate!(widget.medication.id);
+      }
+    } catch (e, stackTrace) {
+      developer.log(
+        'Error updating duration: $e',
+        name: _logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override
@@ -72,9 +106,20 @@ class _MedicationEditorState extends State<MedicationEditor> {
             TextFormField(
               initialValue: widget.medication.name,
               decoration: const InputDecoration(labelText: 'Medication Name'),
-              onChanged:
-                  (value) =>
-                      widget.onChanged(widget.medication.copyWith(name: value)),
+              onChanged: (value) {
+                developer.log(
+                  'Name changed for medication ${widget.medication.id}',
+                  name: _logTag,
+                );
+                final updatedMedication = widget.medication.copyWith(
+                  name: value,
+                );
+                widget.onChanged(updatedMedication);
+
+                if (widget.onScheduleUpdate != null) {
+                  widget.onScheduleUpdate!(widget.medication.id);
+                }
+              },
             ),
             const SizedBox(height: 16),
             Row(
@@ -86,14 +131,27 @@ class _MedicationEditorState extends State<MedicationEditor> {
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: 'Quantity'),
                     onChanged: (value) {
-                      final quantity = double.tryParse(value) ?? 0;
-                      widget.onChanged(
-                        widget.medication.copyWith(
+                      try {
+                        final quantity = double.tryParse(value) ?? 0;
+                        developer.log(
+                          'Dosage quantity changed for ${widget.medication.name}',
+                          name: _logTag,
+                        );
+
+                        final updatedMedication = widget.medication.copyWith(
                           dosage: widget.medication.dosage.copyWith(
                             quantity: quantity,
                           ),
-                        ),
-                      );
+                        );
+                        widget.onChanged(updatedMedication);
+                      } catch (e, stackTrace) {
+                        developer.log(
+                          'Error updating quantity: $e',
+                          name: _logTag,
+                          error: e,
+                          stackTrace: stackTrace,
+                        );
+                      }
                     },
                   ),
                 ),
@@ -113,13 +171,19 @@ class _MedicationEditorState extends State<MedicationEditor> {
                             .toList(),
                     onChanged: (unit) {
                       if (unit != null) {
-                        widget.onChanged(
-                          widget.medication.copyWith(
-                            dosage: widget.medication.dosage.copyWith(
-                              unit: unit,
-                            ),
-                          ),
+                        developer.log(
+                          'Dosage unit changed to ${unit.name} for ${widget.medication.name}',
+                          name: _logTag,
                         );
+
+                        final updatedMedication = widget.medication.copyWith(
+                          dosage: widget.medication.dosage.copyWith(unit: unit),
+                        );
+                        widget.onChanged(updatedMedication);
+
+                        if (widget.onScheduleUpdate != null) {
+                          widget.onScheduleUpdate!(widget.medication.id);
+                        }
                       }
                     },
                     decoration: const InputDecoration(labelText: 'Unit'),
@@ -133,14 +197,19 @@ class _MedicationEditorState extends State<MedicationEditor> {
                 child: TextFormField(
                   controller: _customUnitController,
                   decoration: const InputDecoration(labelText: 'Custom Unit'),
-                  onChanged:
-                      (value) => widget.onChanged(
-                        widget.medication.copyWith(
-                          dosage: widget.medication.dosage.copyWith(
-                            customUnit: value,
-                          ),
-                        ),
+                  onChanged: (value) {
+                    developer.log(
+                      'Custom unit changed for ${widget.medication.name}',
+                      name: _logTag,
+                    );
+
+                    final updatedMedication = widget.medication.copyWith(
+                      dosage: widget.medication.dosage.copyWith(
+                        customUnit: value,
                       ),
+                    );
+                    widget.onChanged(updatedMedication);
+                  },
                 ),
               ),
             const SizedBox(height: 16),
@@ -197,7 +266,16 @@ class _MedicationEditorState extends State<MedicationEditor> {
               alignment: Alignment.centerRight,
               child: IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: widget.onRemove,
+                onPressed: () {
+                  developer.log(
+                    'Removing medication ${widget.medication.name}',
+                    name: _logTag,
+                  );
+                  if (widget.onScheduleUpdate != null) {
+                    widget.onScheduleUpdate!(widget.medication.id);
+                  }
+                  widget.onRemove();
+                },
               ),
             ),
           ],
@@ -207,20 +285,53 @@ class _MedicationEditorState extends State<MedicationEditor> {
   }
 
   Future<void> _editTimes() async {
-    final result = await showDialog<List<AdministrationTime>>(
-      context: context,
-      builder:
-          (context) => TimeEditorDialog(initialTimes: widget.medication.times),
-    );
+    try {
+      developer.log(
+        'Editing times for ${widget.medication.name}',
+        name: _logTag,
+      );
 
-    if (result != null) {
-      widget.onChanged(widget.medication.copyWith(times: result));
-      _timesController.text = _formatTimes(result);
+      final result = await showDialog<List<AdministrationTime>>(
+        context: context,
+        builder:
+            (context) =>
+                TimeEditorDialog(initialTimes: widget.medication.times),
+      );
+
+      if (result != null) {
+        developer.log(
+          'Times updated for ${widget.medication.name}',
+          name: _logTag,
+        );
+
+        final updatedMedication = widget.medication.copyWith(times: result);
+        widget.onChanged(updatedMedication);
+        _timesController.text = _formatTimes(result);
+
+        if (widget.onScheduleUpdate != null) {
+          developer.log(
+            'Triggering schedule update for time change',
+            name: _logTag,
+          );
+          widget.onScheduleUpdate!(widget.medication.id);
+        }
+      }
+    } catch (e, stackTrace) {
+      developer.log(
+        'Error editing times: $e',
+        name: _logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
   @override
   void dispose() {
+    developer.log(
+      'Disposing MedicationEditor for ${widget.medication.name}',
+      name: _logTag,
+    );
     _quantityController.dispose();
     _customUnitController.dispose();
     _timesController.dispose();

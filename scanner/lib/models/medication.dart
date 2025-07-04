@@ -1,41 +1,47 @@
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
-
+import 'package:uuid/uuid.dart';
 part 'medication.g.dart'; // For generated code
 
 @HiveType(typeId: 1)
 @JsonSerializable()
 class Medication {
   @HiveField(0)
-  String name;
+  final String id; // Add this field
 
   @HiveField(1)
+  String name;
+
+  @HiveField(2) // Update field indices
   Dosage dosage;
 
-  @HiveField(2)
+  @HiveField(3)
   List<AdministrationTime> times;
 
-  @HiveField(3)
+  @HiveField(4)
   DurationPeriod duration;
 
   Medication({
+    String? id, // Make optional for creation
     required this.name,
     required this.dosage,
     required this.times,
     required this.duration,
-  });
+  }) : id = id ?? const Uuid().v4(); // Generate ID if not provided
 
   factory Medication.fromJson(Map<String, dynamic> json) =>
       _$MedicationFromJson(json);
   Map<String, dynamic> toJson() => _$MedicationToJson(this);
 
   Medication copyWith({
+    String? id,
     String? name,
     Dosage? dosage,
     List<AdministrationTime>? times,
     DurationPeriod? duration,
   }) {
     return Medication(
+      id: id ?? this.id, // Include ID in copyWith
       name: name ?? this.name,
       dosage: dosage ?? this.dosage,
       times: times ?? List.from(this.times),

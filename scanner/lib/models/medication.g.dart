@@ -17,24 +17,27 @@ class MedicationAdapter extends TypeAdapter<Medication> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Medication(
-      name: fields[0] as String,
-      dosage: fields[1] as Dosage,
-      times: (fields[2] as List).cast<AdministrationTime>(),
-      duration: fields[3] as DurationPeriod,
+      id: fields[0] as String?,
+      name: fields[1] as String,
+      dosage: fields[2] as Dosage,
+      times: (fields[3] as List).cast<AdministrationTime>(),
+      duration: fields[4] as DurationPeriod,
     );
   }
 
   @override
   void write(BinaryWriter writer, Medication obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
-      ..write(obj.name)
+      ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.dosage)
+      ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.times)
+      ..write(obj.dosage)
       ..writeByte(3)
+      ..write(obj.times)
+      ..writeByte(4)
       ..write(obj.duration);
   }
 
@@ -294,6 +297,7 @@ class TimeUnitAdapter extends TypeAdapter<TimeUnit> {
 // **************************************************************************
 
 Medication _$MedicationFromJson(Map<String, dynamic> json) => Medication(
+      id: json['id'] as String?,
       name: json['name'] as String,
       dosage: Dosage.fromJson(json['dosage'] as Map<String, dynamic>),
       times: (json['times'] as List<dynamic>)
@@ -305,6 +309,7 @@ Medication _$MedicationFromJson(Map<String, dynamic> json) => Medication(
 
 Map<String, dynamic> _$MedicationToJson(Medication instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'name': instance.name,
       'dosage': instance.dosage,
       'times': instance.times,

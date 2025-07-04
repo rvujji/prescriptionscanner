@@ -1,102 +1,187 @@
 import 'package:hive/hive.dart';
 import 'notification_service.dart';
 import '../models/prescription.dart';
+import 'dart:developer' as developer;
 
 class MedicationScheduler {
   final NotificationService _notificationService = NotificationService();
   final Box<Prescription> _prescriptionsBox;
+  final String _logTag = 'MedicationScheduler';
 
   MedicationScheduler(this._prescriptionsBox);
 
   Future<void> initialize() async {
-    await _notificationService.initialize();
+    try {
+      developer.log('Initializing MedicationScheduler...', name: _logTag);
+      await _notificationService.initialize();
+      developer.log('Initialized successfully', name: _logTag);
+    } catch (e, stackTrace) {
+      developer.log(
+        'Initialization failed: $e',
+        name: _logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   Future<void> scheduleAllMedications() async {
-    // Clear existing notifications
-    await _notificationService.cancelAllNotifications();
+    try {
+      developer.log('Scheduling all medications...', name: _logTag);
+      await _notificationService.cancelAllNotifications();
 
-    // Get all prescriptions
-    final prescriptions = _prescriptionsBox.values.toList();
+      final prescriptions = _prescriptionsBox.values.toList();
+      developer.log(
+        'Found ${prescriptions.length} prescriptions',
+        name: _logTag,
+      );
 
-    // Generate unique IDs for notifications
-    var notificationId = 0;
+      int totalScheduled = 0;
 
-    for (final prescription in prescriptions) {
-      for (final medication in prescription.medications) {
-        // Schedule each administration time
-        for (final adminTime in medication.times) {
-          final scheduledTimes = adminTime.getAllScheduledTimes(
-            prescription.date,
-            medication.duration,
-          );
+      for (final prescription in prescriptions) {
+        for (final medication in prescription.medications) {
+          final baseId = _getBaseNotificationId(prescription.id, medication.id);
+          int notificationId = baseId;
 
-          for (final scheduledTime in scheduledTimes) {
-            // Skip past notifications
-            if (scheduledTime.isBefore(DateTime.now())) continue;
-
-            await _notificationService.scheduleMedicationNotification(
-              id: notificationId++,
-              title: 'Time to take ${medication.name}',
-              body:
-                  'Take ${medication.dosage.quantity} '
-                  '${medication.dosage.unit.name} as prescribed',
-              scheduledTime: scheduledTime,
+          for (final adminTime in medication.times) {
+            final scheduledTimes = adminTime.getAllScheduledTimes(
+              prescription.date,
+              medication.duration,
             );
+            for (final scheduledTime in scheduledTimes) {
+              if (scheduledTime.isBefore(DateTime.now())) continue;
+
+              await _notificationService.scheduleMedicationNotification(
+                id: notificationId++,
+                title: 'Time to take ${medication.name}',
+                body:
+                    'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
+                scheduledTime: scheduledTime,
+              );
+
+              developer.log(
+                'Scheduled: prescription=${prescription.id}, medication=${medication.id}, time=$scheduledTime, id=${notificationId - 1}',
+                name: _logTag,
+              );
+
+              totalScheduled++;
+            }
           }
         }
       }
+
+      developer.log(
+        'Total scheduled notifications: $totalScheduled',
+        name: _logTag,
+      );
+    } catch (e, stackTrace) {
+      developer.log(
+        'Scheduling failed: $e',
+        name: _logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
     }
   }
 
   Future<void> rescheduleMedicationsForPrescription(
     String prescriptionId,
   ) async {
-    final prescription = _prescriptionsBox.get(prescriptionId);
-    if (prescription == null) return;
+    try {
+      developer.log(
+        'Rescheduling for prescription: $prescriptionId',
+        name: _logTag,
+      );
+      final prescription = _prescriptionsBox.get(prescriptionId);
+      if (prescription == null) {
+        developer.log('Prescription not found: $prescriptionId', name: _logTag);
+        return;
+      }
 
-    // First cancel all notifications for this prescription
-    await _cancelNotificationsForPrescription(prescriptionId);
+      await _cancelNotificationsForPrescription(prescription);
 
-    // Then reschedule them
-    var notificationId = _getBaseNotificationId(prescriptionId);
+      int totalRescheduled = 0;
 
-    for (final medication in prescription.medications) {
-      for (final adminTime in medication.times) {
-        final scheduledTimes = adminTime.getAllScheduledTimes(
-          prescription.date,
-          medication.duration,
-        );
+      for (final medication in prescription.medications) {
+        final baseId = _getBaseNotificationId(prescription.id, medication.id);
+        int notificationId = baseId;
 
-        for (final scheduledTime in scheduledTimes) {
-          // Skip past notifications
-          if (scheduledTime.isBefore(DateTime.now())) continue;
-
-          await _notificationService.scheduleMedicationNotification(
-            id: notificationId++,
-            title: 'Time to take ${medication.name}',
-            body:
-                'Take ${medication.dosage.quantity} '
-                '${medication.dosage.unit.name} as prescribed',
-            scheduledTime: scheduledTime,
+        for (final adminTime in medication.times) {
+          final scheduledTimes = adminTime.getAllScheduledTimes(
+            prescription.date,
+            medication.duration,
           );
+          for (final scheduledTime in scheduledTimes) {
+            if (scheduledTime.isBefore(DateTime.now())) continue;
+
+            await _notificationService.scheduleMedicationNotification(
+              id: notificationId++,
+              title: 'Time to take ${medication.name}',
+              body:
+                  'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
+              scheduledTime: scheduledTime,
+            );
+
+            developer.log(
+              'Rescheduled: prescription=${prescription.id}, medication=${medication.id}, time=$scheduledTime, id=${notificationId - 1}',
+              name: _logTag,
+            );
+
+            totalRescheduled++;
+          }
         }
       }
+
+      developer.log('Total rescheduled: $totalRescheduled', name: _logTag);
+    } catch (e, stackTrace) {
+      developer.log(
+        'Rescheduling failed: $e',
+        name: _logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
     }
   }
 
   Future<void> _cancelNotificationsForPrescription(
-    String prescriptionId,
+    Prescription prescription,
   ) async {
-    final baseId = _getBaseNotificationId(prescriptionId);
-    // Assuming max 100 medications per prescription
-    for (var i = 0; i < 100; i++) {
-      await _notificationService.cancelNotification(baseId + i);
+    try {
+      int totalCancelled = 0;
+
+      for (final medication in prescription.medications) {
+        final baseId = _getBaseNotificationId(prescription.id, medication.id);
+        for (var i = 0; i < 100; i++) {
+          final id = baseId + i;
+          try {
+            await _notificationService.cancelNotification(id);
+            totalCancelled++;
+          } catch (e) {
+            developer.log('Failed to cancel ID $id: $e', name: _logTag);
+          }
+        }
+      }
+
+      developer.log(
+        'Cancelled $totalCancelled notifications for prescription ${prescription.id}',
+        name: _logTag,
+      );
+    } catch (e, stackTrace) {
+      developer.log(
+        'Cancel failed: $e',
+        name: _logTag,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
     }
   }
 
-  int _getBaseNotificationId(String prescriptionId) {
-    // Generate a base ID from the prescription ID hash
-    return prescriptionId.hashCode % 100000;
+  /// Creates a base ID using a combined hash of prescription and medication IDs.
+  int _getBaseNotificationId(String prescriptionId, String medicationId) {
+    return (prescriptionId + medicationId).hashCode.abs() % 1000000;
   }
 }

@@ -4,7 +4,6 @@ import 'widgets/prescription_list.dart';
 import 'services/hive_service.dart';
 import 'package:logging/logging.dart';
 
-final Logger _appLogger = Logger('MyApp');
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Configure logging
@@ -23,7 +22,7 @@ void main() async {
       print('StackTrace: ${record.stackTrace}');
     }
   });
-  
+
   await HiveService.init();
 
   final cameras = await availableCameras();
