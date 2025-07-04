@@ -25,13 +25,10 @@ class Medication {
     required this.duration,
   });
 
-  // JSON Serialization
   factory Medication.fromJson(Map<String, dynamic> json) =>
       _$MedicationFromJson(json);
-
   Map<String, dynamic> toJson() => _$MedicationToJson(this);
 
-  // Copy method
   Medication copyWith({
     String? name,
     Dosage? dosage,
@@ -79,6 +76,7 @@ class Dosage {
 
   factory Dosage.fromJson(Map<String, dynamic> json) => _$DosageFromJson(json);
   Map<String, dynamic> toJson() => _$DosageToJson(this);
+
   Dosage copyWith({double? quantity, DosageUnit? unit, String? customUnit}) {
     return Dosage(
       quantity: quantity ?? this.quantity,
@@ -98,7 +96,7 @@ class AdministrationTime {
   final TimeUnit unit;
 
   @HiveField(2)
-  final List<String> specificTimes; // ⬅️ Store as ["08:00", "13:00", ...]
+  final List<String> specificTimes;
 
   AdministrationTime({
     required this.frequency,
@@ -120,6 +118,40 @@ class AdministrationTime {
       unit: unit ?? this.unit,
       specificTimes: specificTimes ?? this.specificTimes,
     );
+  }
+
+  List<DateTime> getAllScheduledTimes(
+    DateTime startDate,
+    DurationPeriod duration,
+  ) {
+    final times = <DateTime>[];
+    final durationMinutes = duration.inMinutes;
+    final endDate =
+        durationMinutes != null
+            ? startDate.add(Duration(minutes: durationMinutes))
+            : DateTime.now().add(const Duration(days: 365 * 10));
+
+    var currentDate = DateTime(startDate.year, startDate.month, startDate.day);
+
+    while (currentDate.isBefore(endDate)) {
+      for (final timeStr in specificTimes) {
+        final timeParts = timeStr.split(':');
+        final hour = int.parse(timeParts[0]);
+        final minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
+        times.add(
+          DateTime(
+            currentDate.year,
+            currentDate.month,
+            currentDate.day,
+            hour,
+            minute,
+          ),
+        );
+      }
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+
+    return times;
   }
 }
 
@@ -178,4 +210,34 @@ class DurationPeriod {
   factory DurationPeriod.fromJson(Map<String, dynamic> json) =>
       _$DurationPeriodFromJson(json);
   Map<String, dynamic> toJson() => _$DurationPeriodToJson(this);
+}
+
+extension DurationPeriodExtension on DurationPeriod {
+  int? get inMinutes {
+    if (isForever) return null;
+    switch (unit) {
+      case TimeUnit.hour:
+        return number! * 60;
+      case TimeUnit.day:
+        return number! * 24 * 60;
+      case TimeUnit.week:
+        return number! * 7 * 24 * 60;
+      case TimeUnit.month:
+        return number! * 30 * 24 * 60;
+      default:
+        return null;
+    }
+  }
+}
+
+extension AdministrationTimeExtension on AdministrationTime {
+  List<DateTime> getTodayTimes() {
+    final now = DateTime.now();
+    return specificTimes.map((timeStr) {
+      final timeParts = timeStr.split(':');
+      final hour = int.parse(timeParts[0]);
+      final minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
+      return DateTime(now.year, now.month, now.day, hour, minute);
+    }).toList();
+  }
 }
