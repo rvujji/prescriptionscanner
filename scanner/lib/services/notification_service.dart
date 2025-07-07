@@ -14,11 +14,9 @@ class NotificationService {
   Future<void> initialize() async {
     try {
       developer.log('Initializing NotificationService...', name: _logTag);
-
-      _notificationsPlugin = FlutterLocalNotificationsPlugin();
-
       tz.initializeTimeZones();
-
+      tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
+      _notificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 

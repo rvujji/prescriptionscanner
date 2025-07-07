@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.scanner"
+    namespace = "com.oten.scanner"
     compileSdk = flutter.compileSdkVersion.toInt()
 
     ndkVersion = "27.0.12077973" //raj
 
     defaultConfig {
-        applicationId = "com.example.scanner"
+        applicationId = "com.oten.scanner"
         minSdk = flutter.minSdkVersion.toInt()
         targetSdk = flutter.targetSdkVersion.toInt()
         versionCode = flutter.versionCode.toInt()
