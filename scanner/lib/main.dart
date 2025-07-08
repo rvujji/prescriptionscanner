@@ -10,6 +10,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/services.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +46,11 @@ void main() async {
   );
 }
 
+@pragma('vm:entry-point') // required so Flutter doesn't tree-shake this
+void notificationTapBackground(NotificationResponse response) {
+  print('🔔 Background notification clicked: ${response.payload}');
+}
+
 Future<void> requestNotificationPermission() async {
   final status = await Permission.notification.status;
 
@@ -69,15 +75,17 @@ Future<void> requestNotificationPermission() async {
 }
 
 Future<void> requestExactAlarmPermission() async {
-  const platform = MethodChannel('exact_alarm_permission');
+   if (Platform.isAndroid) {
+    const platform = MethodChannel('exact_alarm_permission');
 
-  try {
-    await platform.invokeMethod('requestExactAlarmPermission');
-  } on PlatformException catch (e) {
-    print("❌ Failed to request exact alarm permission: $e");
+    try {
+      await platform.invokeMethod('requestExactAlarmPermission');
+    } on PlatformException catch (e) {
+      print("❌ Failed to request exact alarm permission: $e");
+    }
+    final alarmStatus = await Permission.scheduleExactAlarm.status;
+    print("Alarm Permission: ${alarmStatus.isGranted}");
   }
-  final alarmStatus = await Permission.scheduleExactAlarm.status;
-  print("Alarm Permission: ${alarmStatus.isGranted}");
 }
 
 Future<void> testImmediateNotification() async {
@@ -99,9 +107,7 @@ Future<void> testImmediateNotification() async {
     onDidReceiveNotificationResponse: (response) {
       print('🔔 Notification clicked: ${response.payload}');
     },
-    onDidReceiveBackgroundNotificationResponse: (response) {
-      print('🔔 Background notification clicked: ${response.payload}');
-    },
+    onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
   );
 
   const androidDetails = AndroidNotificationDetails(

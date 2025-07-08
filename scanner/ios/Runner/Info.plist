@@ -57,5 +57,15 @@
 		<true />
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true />
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>This app needs access to the local network to enable Flutter debugging features.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>This app requires camera access to scan prescriptions.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app needs microphone access for questions on medications.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs access to your photo library to attach prescription images.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>This app needs permission to save images to your photo library.</string>
 	</dict>
 </plist>

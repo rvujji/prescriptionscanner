@@ -7,6 +7,9 @@ import '../services/hive_service.dart';
 import '../models/prescription.dart';
 import '../services/scanner_service.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+
 final Logger _logger = Logger('PrescriptionAddPage');
 
 class PrescriptionAddPage extends StatefulWidget {
@@ -44,24 +47,108 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
     }
   }
 
-  Future<void> _scanFromGallery() async {
-    _logger.info('User initiated gallery scan');
-    setState(() => _isLoading = true);
-    try {
-      final image = await _imagePicker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        _logger.info('Image picked from gallery: ${image.path}');
-        await _processImage(image.path);
-      } else {
-        _logger.warning('No image selected from gallery');
+  Future<void> _requestCameraPermission() async {
+    final status = await Permission.camera.status;
+    
+    if (status.isDenied || status.isRestricted) {
+      final result = await Permission.camera.request();
+      
+      if (result.isPermanentlyDenied) {
+        _showError('Camera access is permanently denied. Please enable it in settings.');
+        await openAppSettings();
+        return;
+      } else if (!result.isGranted) {
+        _showError('Camera access is required to take photos.');
+        return;
       }
-    } catch (e, stack) {
-      _logger.severe('Gallery image selection failed: $e', e, stack);
-      _showError('Failed to pick image: $e');
-    } finally {
-      setState(() => _isLoading = false);
+    }
+    
+    // On Android, we also need storage permission to save the image
+    if (Platform.isAndroid) {
+      final storageStatus = await Permission.storage.status;
+      if (storageStatus.isDenied || storageStatus.isRestricted) {
+        final storageResult = await Permission.storage.request();
+        if (storageResult.isPermanentlyDenied) {
+          _showError('Storage access is permanently denied. Please enable it in settings.');
+          await openAppSettings();
+          return;
+        } else if (!storageResult.isGranted) {
+          _showError('Storage access is required to save photos.');
+          return;
+        }
+      }
+    }
+    
+    _logger.info('Camera permission granted');
+  }
+
+  Future<void> _requestPhotoPermission() async {
+  Permission permission;
+
+  if (Platform.isAndroid) {
+    permission = Permission.photos; // For Android 13+
+    if (await permission.isDenied || await permission.isRestricted) {
+      permission = Permission.storage; // Fallback for older Androids
+    }
+  } else {
+    permission = Permission.photos; // iOS
+  }
+
+  final status = await permission.status;
+
+  if (status.isDenied || status.isRestricted) {
+    final result = await permission.request();
+
+    if (result.isPermanentlyDenied) {
+      _showError('Photo access is permanently denied. Please enable it in settings.');
+      await openAppSettings();
+      return;
+    } else if (!result.isGranted) {
+      _showError('Photo access is required to select images.');
+      return;
     }
   }
+
+  _logger.info('✅ Photo permission granted');
+}
+
+  
+Future<void> _scanFromGallery() async {
+  _logger.info('User initiated gallery scan');
+
+  if (Platform.isIOS) {
+    // For iOS, trust that ImagePicker will trigger the dialog
+    final pickerStatus = await Permission.photos.status;
+    if (pickerStatus.isPermanentlyDenied) {
+      _showError('Photo access is permanently denied. Please enable it in settings.');
+      await openAppSettings();
+      return;
+    }
+  } else {
+    // For Android: check storage/photos permission
+    final permission = await Permission.storage.request();
+    if (!permission.isGranted) {
+      _showError('Permission to access gallery is not granted.');
+      return;
+    }
+  }
+
+  setState(() => _isLoading = true);
+  try {
+    final image = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      _logger.info('Image picked from gallery: ${image.path}');
+      await _processImage(image.path);
+    } else {
+      _logger.warning('No image selected from gallery');
+    }
+  } catch (e, stack) {
+    _logger.severe('Gallery image selection failed: $e', e, stack);
+    _showError('Failed to pick image: $e');
+  } finally {
+    setState(() => _isLoading = false);
+  }
+}
 
   Future<void> _processImage(String imagePath) async {
     _logger.info('Starting OCR + Parsing for: $imagePath');
