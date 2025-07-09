@@ -17,26 +17,42 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
   @override
   void initState() {
     super.initState();
-    _times = List.from(widget.initialTimes);
+    try {
+      _times = List.from(widget.initialTimes);
 
-    if (_times.isEmpty) {
-      _times.add(
+      if (_times.isEmpty) {
+        _times.add(
+          AdministrationTime(
+            frequency: 1,
+            unit: TimeUnit.day,
+            specificTimes: [],
+          ),
+        );
+      }
+
+      for (int i = 0; i < _times.length; i++) {
+        final joinedTimes = _times[i].specificTimes.join(', ');
+        _specificTimesControllers[i] = TextEditingController(text: joinedTimes);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error in initState: $e\n$stackTrace');
+      _times = [
         AdministrationTime(frequency: 1, unit: TimeUnit.day, specificTimes: []),
-      );
-    }
-
-    for (int i = 0; i < _times.length; i++) {
-      final joinedTimes = _times[i].specificTimes.join(', ');
-      _specificTimesControllers[i] = TextEditingController(text: joinedTimes);
+      ];
     }
   }
 
   @override
   void dispose() {
-    for (final controller in _specificTimesControllers.values) {
-      controller.dispose();
+    try {
+      for (final controller in _specificTimesControllers.values) {
+        controller.dispose();
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error disposing controllers: $e\n$stackTrace');
+    } finally {
+      super.dispose();
     }
-    super.dispose();
   }
 
   @override
@@ -66,8 +82,14 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                               labelText: 'Every',
                             ),
                             onChanged: (value) {
-                              final freq = int.tryParse(value) ?? 1;
-                              _times[index] = time.copyWith(frequency: freq);
+                              try {
+                                final freq = int.tryParse(value) ?? 1;
+                                _times[index] = time.copyWith(frequency: freq);
+                              } catch (e, stackTrace) {
+                                debugPrint(
+                                  'Error updating frequency: $e\n$stackTrace',
+                                );
+                              }
                             },
                           ),
                         ),
@@ -83,10 +105,16 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                                   );
                                 }).toList(),
                             onChanged: (unit) {
-                              if (unit != null) {
-                                setState(() {
-                                  _times[index] = time.copyWith(unit: unit);
-                                });
+                              try {
+                                if (unit != null) {
+                                  setState(() {
+                                    _times[index] = time.copyWith(unit: unit);
+                                  });
+                                }
+                              } catch (e, stackTrace) {
+                                debugPrint(
+                                  'Error changing time unit: $e\n$stackTrace',
+                                );
                               }
                             },
                             decoration: const InputDecoration(
@@ -97,10 +125,16 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
                         IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () {
-                            setState(() {
-                              _specificTimesControllers.remove(index);
-                              _times.removeAt(index);
-                            });
+                            try {
+                              setState(() {
+                                _specificTimesControllers.remove(index);
+                                _times.removeAt(index);
+                              });
+                            } catch (e, stackTrace) {
+                              debugPrint(
+                                'Error removing time entry: $e\n$stackTrace',
+                              );
+                            }
                           },
                         ),
                       ],
@@ -130,17 +164,22 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
             }),
             TextButton(
               onPressed: () {
-                final newIndex = _times.length;
-                setState(() {
-                  _times.add(
-                    AdministrationTime(
-                      frequency: 1,
-                      unit: TimeUnit.day,
-                      specificTimes: [],
-                    ),
-                  );
-                  _specificTimesControllers[newIndex] = TextEditingController();
-                });
+                try {
+                  final newIndex = _times.length;
+                  setState(() {
+                    _times.add(
+                      AdministrationTime(
+                        frequency: 1,
+                        unit: TimeUnit.day,
+                        specificTimes: [],
+                      ),
+                    );
+                    _specificTimesControllers[newIndex] =
+                        TextEditingController();
+                  });
+                } catch (e, stackTrace) {
+                  debugPrint('Error adding new time entry: $e\n$stackTrace');
+                }
               },
               child: const Text('+ Add Another Time'),
             ),
@@ -153,7 +192,17 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
           child: const Text('Cancel'),
         ),
         TextButton(
-          onPressed: () => Navigator.pop(context, _times),
+          onPressed: () {
+            try {
+              Navigator.pop(context, _times);
+            } catch (e, stackTrace) {
+              debugPrint('Error saving times: $e\n$stackTrace');
+              Navigator.pop(
+                context,
+                widget.initialTimes,
+              ); // Fallback to original
+            }
+          },
           child: const Text('Save'),
         ),
       ],
@@ -161,32 +210,47 @@ class _TimeEditorDialogState extends State<TimeEditorDialog> {
   }
 
   Future<void> _pickTime(int index, TextEditingController controller) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-      builder:
-          (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-            child: child!,
-          ),
-    );
+    try {
+      final TimeOfDay? picked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder:
+            (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(alwaysUse24HourFormat: true),
+              child: child!,
+            ),
+      );
 
-    if (picked != null) {
-      final formatted = _formatTime(picked);
-      final current = controller.text.trim();
-      final updatedText = current.isEmpty ? formatted : '$current, $formatted';
-      setState(() {
-        controller.text = updatedText;
-        _times[index] = _times[index].copyWith(
-          specificTimes: updatedText.split(',').map((e) => e.trim()).toList(),
-        );
-      });
+      if (picked != null) {
+        final formatted = _formatTime(picked);
+        final current = controller.text.trim();
+        final updatedText =
+            current.isEmpty ? formatted : '$current, $formatted';
+        setState(() {
+          controller.text = updatedText;
+          _times[index] = _times[index].copyWith(
+            specificTimes: updatedText.split(',').map((e) => e.trim()).toList(),
+          );
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error picking time: $e\n$stackTrace');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to set time')));
     }
   }
 
   String _formatTime(TimeOfDay time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    try {
+      final hour = time.hour.toString().padLeft(2, '0');
+      final minute = time.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    } catch (e, stackTrace) {
+      debugPrint('Error formatting time: $e\n$stackTrace');
+      return '08:00'; // Default fallback
+    }
   }
 }
