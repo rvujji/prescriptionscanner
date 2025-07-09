@@ -58,6 +58,7 @@ class MedicationScheduler {
                 body:
                     'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
                 scheduledTime: scheduledTime,
+                isForever: medication.duration.isForever,
               );
 
               developer.log(
@@ -122,6 +123,7 @@ class MedicationScheduler {
               body:
                   'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
               scheduledTime: scheduledTime,
+              isForever: medication.duration.isForever,
             );
 
             developer.log(
@@ -213,6 +215,7 @@ class MedicationScheduler {
               body:
                   'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
               scheduledTime: scheduledTime,
+              isForever: medication.duration.isForever,
             );
 
             developer.log(

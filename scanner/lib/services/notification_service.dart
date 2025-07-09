@@ -3,6 +3,11 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:developer' as developer;
 
+@pragma('vm:entry-point') // required so Flutter doesn't tree-shake this
+void notificationTapBackground(NotificationResponse response) {
+  developer.log('🔔 Background notification clicked: ${response.payload}');
+}
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -10,11 +15,6 @@ class NotificationService {
 
   late FlutterLocalNotificationsPlugin _notificationsPlugin;
   final String _logTag = 'NotificationService';
-
-  @pragma('vm:entry-point') // required so Flutter doesn't tree-shake this
-  void notificationTapBackground(NotificationResponse response) {
-    developer.log('🔔 Background notification clicked: ${response.payload}');
-  }
 
   Future<void> initialize() async {
     try {
@@ -64,6 +64,7 @@ class NotificationService {
     required DateTime scheduledTime,
     String? prescriptionId,
     String? medicationId,
+    bool isForever = false,
   }) async {
     try {
       final contextInfo =
@@ -71,7 +72,7 @@ class NotificationService {
 
       developer.log(
         'Scheduling medication notification $contextInfo → '
-        'id=$id, title="$title", time=$scheduledTime',
+        'id=$id, title="$title", time=$scheduledTime, isForever=$isForever',
         name: _logTag,
       );
 
@@ -105,7 +106,7 @@ class NotificationService {
         tzDateTime,
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        // matchDateTimeComponents: DateTimeComponents.time,
+        matchDateTimeComponents: isForever ? DateTimeComponents.time : null,
       );
 
       developer.log(

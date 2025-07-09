@@ -131,33 +131,65 @@ class AdministrationTime {
     DurationPeriod duration,
   ) {
     final times = <DateTime>[];
-    final durationMinutes = duration.inMinutes;
-    final endDate =
-        durationMinutes != null
-            ? startDate.add(Duration(minutes: durationMinutes))
-            : DateTime.now().add(const Duration(days: 365 * 10));
+    final now = DateTime.now();
 
-    var currentDate = DateTime(startDate.year, startDate.month, startDate.day);
+    if (duration.isForever) {
+      // For "forever" duration, only return today's or tomorrow's times
+      final todayTimes = _getTimesForDate(now);
+      final isPastAllTimesToday = todayTimes.every(
+        (time) => time.isBefore(now),
+      );
 
-    while (currentDate.isBefore(endDate)) {
-      for (final timeStr in specificTimes) {
-        final timeParts = timeStr.split(':');
-        final hour = int.parse(timeParts[0]);
-        final minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
-        times.add(
-          DateTime(
-            currentDate.year,
-            currentDate.month,
-            currentDate.day,
-            hour,
-            minute,
-          ),
-        );
+      if (isPastAllTimesToday) {
+        // If all times today have passed, return tomorrow's times
+        times.addAll(_getTimesForDate(now.add(const Duration(days: 1))));
+      } else {
+        // Otherwise return today's upcoming times
+        times.addAll(todayTimes.where((time) => time.isAfter(now)));
       }
-      currentDate = currentDate.add(const Duration(days: 1));
+    } else {
+      final durationMinutes = duration.inMinutes;
+      final endDate =
+          durationMinutes != null
+              ? startDate.add(Duration(minutes: durationMinutes))
+              : DateTime.now().add(const Duration(days: 365 * 10));
+
+      var currentDate = DateTime(
+        startDate.year,
+        startDate.month,
+        startDate.day,
+      );
+
+      while (currentDate.isBefore(endDate)) {
+        for (final timeStr in specificTimes) {
+          final timeParts = timeStr.split(':');
+          final hour = int.parse(timeParts[0]);
+          final minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
+          times.add(
+            DateTime(
+              currentDate.year,
+              currentDate.month,
+              currentDate.day,
+              hour,
+              minute,
+            ),
+          );
+        }
+        currentDate = currentDate.add(const Duration(days: 1));
+      }
     }
 
     return times;
+  }
+
+  // Helper method to get times for a specific date
+  List<DateTime> _getTimesForDate(DateTime date) {
+    return specificTimes.map((timeStr) {
+      final timeParts = timeStr.split(':');
+      final hour = int.parse(timeParts[0]);
+      final minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
+      return DateTime(date.year, date.month, date.day, hour, minute);
+    }).toList();
   }
 }
 
