@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "scanner (Android Debug)",
+      "name": "Emulator",
       "cwd": "scanner",
       "request": "launch",
       "type": "dart",
@@ -14,6 +14,15 @@
       // If multiple Android devices/emulators are running,
       // Flutter will prompt you to choose one.
       // For a specific device, use its ID (e.g., "emulator-5554")
+      "args": [] // Optional: Add any arguments you need for flutter run
+    },
+    {
+      "name": "samsung android",
+      "cwd": "scanner",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart", // Explicitly specify the entry point
+      "deviceId": "RF8N20D9XSR", // "android" - This tells Flutter to target an Android device/emulator
       "args": [] // Optional: Add any arguments you need for flutter run
     },
     {

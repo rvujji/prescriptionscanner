@@ -75,7 +75,7 @@ Future<void> requestNotificationPermission() async {
 }
 
 Future<void> requestExactAlarmPermission() async {
-   if (Platform.isAndroid) {
+  if (Platform.isAndroid) {
     const platform = MethodChannel('exact_alarm_permission');
 
     try {
@@ -91,6 +91,7 @@ Future<void> requestExactAlarmPermission() async {
 Future<void> testImmediateNotification() async {
   final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+  // Initialize notifications
   const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
   const iosInit = DarwinInitializationSettings(
     requestSoundPermission: true,
@@ -110,6 +111,7 @@ Future<void> testImmediateNotification() async {
     onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
   );
 
+  // Android notification details
   const androidDetails = AndroidNotificationDetails(
     'medication_channel',
     'Medication Alerts',
@@ -120,6 +122,7 @@ Future<void> testImmediateNotification() async {
     enableVibration: true,
   );
 
+  // iOS notification details
   const iosDetails = DarwinNotificationDetails(
     presentAlert: true,
     presentSound: true,
@@ -131,25 +134,34 @@ Future<void> testImmediateNotification() async {
     iOS: iosDetails,
   );
 
-  await flutterLocalNotificationsPlugin.show(
-    1,
-    'Test Notification 1',
-    'This is a test alert 1',
-    notificationDetails,
-  );
+  // Test immediate notification (works)
+  // await flutterLocalNotificationsPlugin.show(
+  //   1,
+  //   'Test Notification 1',
+  //   'This is a test alert 1',
+  //   notificationDetails,
+  // );
+
+  // Test scheduled notification (debugging)
   final scheduledTime = tz.TZDateTime.now(
     tz.local,
   ).add(const Duration(seconds: 30));
-  print('Scheduling notification for: $scheduledTime');
-  print('Current time is: ${tz.TZDateTime.now(tz.local)}');
-  await flutterLocalNotificationsPlugin.zonedSchedule(
-    2,
-    'Test Notification 2',
-    'This is a test alert 2',
-    scheduledTime,
-    notificationDetails,
-    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-  );
+  print('⏰ Scheduled time: $scheduledTime');
+  print('⏰ Current time: ${tz.TZDateTime.now(tz.local)}');
+
+  try {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      2, // Unique ID
+      'Test Notification 2',
+      'This is a test alert 2',
+      scheduledTime,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+    print('✅ Notification 2 scheduled successfully!');
+  } catch (e) {
+    print('❌ Failed to schedule notification: $e');
+  }
 }
 
 class PrescriptionScannerApp extends StatelessWidget {
