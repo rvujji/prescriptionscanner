@@ -24,17 +24,17 @@ void main() async {
       '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}',
     );
   });
-  tz.initializeTimeZones();
-  tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
-  // await HiveService.init();
-  // final medicationScheduler = MedicationScheduler(
-  //   HiveService.getPrescriptionBox(),
-  // );
-  // await medicationScheduler.initialize();
+  //tz.initializeTimeZones();
+  // tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
+  await HiveService.init();
+  final medicationScheduler = MedicationScheduler(
+    HiveService.getPrescriptionBox(),
+  );
+  await medicationScheduler.initialize();
   await requestExactAlarmPermission();
   await requestNotificationPermission();
-  await testImmediateNotification();
-  // await medicationScheduler.scheduleAllMedications();
+  // await testImmediateNotification();
+  await medicationScheduler.scheduleAllMedications();
   final cameras = await availableCameras();
   runZonedGuarded(
     () {

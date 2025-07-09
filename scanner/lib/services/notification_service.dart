@@ -11,26 +11,35 @@ class NotificationService {
   late FlutterLocalNotificationsPlugin _notificationsPlugin;
   final String _logTag = 'NotificationService';
 
+  @pragma('vm:entry-point') // required so Flutter doesn't tree-shake this
+  void notificationTapBackground(NotificationResponse response) {
+    developer.log('🔔 Background notification clicked: ${response.payload}');
+  }
+
   Future<void> initialize() async {
     try {
       developer.log('Initializing NotificationService...', name: _logTag);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
       _notificationsPlugin = FlutterLocalNotificationsPlugin();
-      const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidIinit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosInit = DarwinInitializationSettings(
+        requestSoundPermission: true,
+        requestBadgePermission: true,
+        requestAlertPermission: true,
+      );
 
-      const InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
+      const initSettings = InitializationSettings(
+        android: androidIinit,
+        iOS: iosInit,
+      );
 
       await _notificationsPlugin.initialize(
-        initializationSettings,
-        onDidReceiveNotificationResponse: (details) {
-          developer.log(
-            'Notification tapped: ${details.payload}',
-            name: _logTag,
-          );
+        initSettings,
+        onDidReceiveNotificationResponse: (response) {
+          print('🔔 Notification clicked: ${response.payload}');
         },
+        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
       developer.log(
@@ -70,13 +79,22 @@ class NotificationService {
         'medication_channel',
         'Medication Reminders',
         channelDescription: 'Notifications for medication schedules',
-        importance: Importance.high,
+        importance: Importance.max,
         priority: Priority.high,
         playSound: true,
         enableVibration: true,
       );
+      // iOS notification details
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentSound: true,
+        presentBadge: true,
+      );
 
-      final notificationDetails = NotificationDetails(android: androidDetails);
+      final notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
 
       final tzDateTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
@@ -87,7 +105,7 @@ class NotificationService {
         tzDateTime,
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
+        // matchDateTimeComponents: DateTimeComponents.time,
       );
 
       developer.log(

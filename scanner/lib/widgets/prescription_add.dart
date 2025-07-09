@@ -47,45 +47,6 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
     }
   }
 
-  Future<void> _requestCameraPermission() async {
-    final status = await Permission.camera.status;
-
-    if (status.isDenied || status.isRestricted) {
-      final result = await Permission.camera.request();
-
-      if (result.isPermanentlyDenied) {
-        _showError(
-          'Camera access is permanently denied. Please enable it in settings.',
-        );
-        await openAppSettings();
-        return;
-      } else if (!result.isGranted) {
-        _showError('Camera access is required to take photos.');
-        return;
-      }
-    }
-
-    // On Android, we also need storage permission to save the image
-    if (Platform.isAndroid) {
-      final storageStatus = await Permission.storage.status;
-      if (storageStatus.isDenied || storageStatus.isRestricted) {
-        final storageResult = await Permission.storage.request();
-        if (storageResult.isPermanentlyDenied) {
-          _showError(
-            'Storage access is permanently denied. Please enable it in settings.',
-          );
-          await openAppSettings();
-          return;
-        } else if (!storageResult.isGranted) {
-          _showError('Storage access is required to save photos.');
-          return;
-        }
-      }
-    }
-
-    _logger.info('Camera permission granted');
-  }
-
   Future<bool> _requestGalleryPermission() async {
     if (Platform.isAndroid) {
       if (await Permission.storage.isGranted) {
