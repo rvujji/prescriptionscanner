@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Emulator",
+      "name": "Emulator 6a",
       "cwd": "scanner",
       "request": "launch",
       "type": "dart",
