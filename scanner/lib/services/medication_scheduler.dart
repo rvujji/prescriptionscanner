@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'notification_service.dart';
 import '../models/prescription.dart';
 import 'dart:developer' as developer;
+import '../utilities/alarms_info.dart';
 
 class MedicationScheduler {
   final NotificationService _notificationService = NotificationService();
@@ -61,10 +62,10 @@ class MedicationScheduler {
                 isForever: medication.duration.isForever,
               );
 
-              developer.log(
-                'Scheduled: prescription=${prescription.id}, medication=${medication.id}, time=$scheduledTime, id=${notificationId - 1}',
-                name: _logTag,
-              );
+              // developer.log(
+              //   'Scheduled: prescription=${prescription.id}, medication=${medication.id}, time=$scheduledTime, id=${notificationId - 1}',
+              //   name: _logTag,
+              // );
 
               totalScheduled++;
             }
@@ -76,6 +77,7 @@ class MedicationScheduler {
         'Total scheduled notifications: $totalScheduled',
         name: _logTag,
       );
+      checkScheduledNotifications();
     } catch (e, stackTrace) {
       developer.log(
         'Scheduling failed: $e',
