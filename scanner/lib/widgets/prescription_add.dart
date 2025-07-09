@@ -68,7 +68,7 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
     } else {
       // iOS
       final status = await Permission.photos.request();
-      if (status.isPermanentlyDenied) {
+      if (status.isPermanentlyDenied  || status.isRestricted) {
         _showError('Please enable photo access in Settings');
         await openAppSettings();
         return false;
@@ -80,11 +80,11 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
   Future<void> _scanFromGallery() async {
     _logger.info('User initiated gallery scan');
     try {
-      final permissionStatus = await _requestGalleryPermission();
-      if (!permissionStatus) {
-        _logger.warning('Gallery permission not granted');
-        return;
-      }
+      // final permissionStatus = await _requestGalleryPermission();
+      // if (!permissionStatus) {
+      //   _logger.warning('Gallery permission not granted');
+      //   return;
+      // }
       setState(() => _isLoading = true);
       final image = await _imagePicker.pickImage(source: ImageSource.gallery);
       if (image != null) {
