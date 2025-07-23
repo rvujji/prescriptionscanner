@@ -24,17 +24,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   void _submitLogin(String emailOrPhone, String password) async {
-    final usersBox = Hive.box<User>('users');
-
-    User? user = usersBox.values.firstWhere(
-      (u) =>
-          (u.email == emailOrPhone || u.phone == emailOrPhone) &&
-          u.password == password,
-      orElse: () => null as User, // This works only if UserModel? user
-    );
-
-    if (user == null) {
-      _showError("Invalid credentials");
+    try {
+      HiveService.validateUser(emailOrPhone, password);
+    } catch (e) {
+      _showError("$e");
       return;
     }
 

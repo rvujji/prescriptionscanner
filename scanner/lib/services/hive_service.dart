@@ -150,4 +150,19 @@ class HiveService {
       rethrow;
     }
   }
+
+  static Future<void> validateUser(String emailOrPhone, String password) async {
+    final usersBox = Hive.box<User>('users');
+
+    User? user = usersBox.values.firstWhere(
+      (u) =>
+          (u.email == emailOrPhone || u.phone == emailOrPhone) &&
+          u.password == password,
+      orElse: () => null as User, // This works only if UserModel? user
+    );
+
+    if (user == null) {
+      throw ("Invalid credentials");
+    }
+  }
 }

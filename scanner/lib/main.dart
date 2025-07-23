@@ -11,23 +11,22 @@ import 'widgets/auth/login_screen.dart';
 import 'widgets/auth/register_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Configure logging
-  Logger.root.level =
-      Level
-          .ALL; // Set to Level.ALL for full debugging, or Level.INFO, Level.WARNING, etc.
-  Logger.root.onRecord.listen((record) {
-    // Print logs to the console
-    print(
-      '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}',
-    );
-  });
-  await HiveService.init();
-  await requestExactAlarmPermission();
-  await requestNotificationPermission();
-
   runZonedGuarded(
-    () {
+    () async {
+      WidgetsFlutterBinding.ensureInitialized(); // Moved inside the zone
+
+      // Configure logging
+      Logger.root.level = Level.ALL;
+      Logger.root.onRecord.listen((record) {
+        print(
+          '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}',
+        );
+      });
+
+      await HiveService.init();
+      await requestExactAlarmPermission();
+      await requestNotificationPermission();
+
       runApp(PrescriptionScannerApp());
     },
     (error, stackTrace) {
