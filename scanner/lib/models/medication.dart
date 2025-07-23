@@ -21,12 +21,20 @@ class Medication {
   @HiveField(4)
   DurationPeriod duration;
 
+  @HiveField(5)
+  String? frontImagePath;
+
+  @HiveField(6)
+  String? backImagePath;
+
   Medication({
     String? id, // Make optional for creation
     required this.name,
     required this.dosage,
     required this.times,
     required this.duration,
+    this.frontImagePath,
+    this.backImagePath,
   }) : id = id ?? const Uuid().v4(); // Generate ID if not provided
 
   factory Medication.fromJson(Map<String, dynamic> json) =>
@@ -39,6 +47,8 @@ class Medication {
     Dosage? dosage,
     List<AdministrationTime>? times,
     DurationPeriod? duration,
+    String? frontImagePath,
+    String? backImagePath,
   }) {
     return Medication(
       id: id ?? this.id, // Include ID in copyWith
@@ -46,6 +56,8 @@ class Medication {
       dosage: dosage ?? this.dosage,
       times: times ?? List.from(this.times),
       duration: duration ?? this.duration,
+      frontImagePath: frontImagePath ?? this.frontImagePath,
+      backImagePath: backImagePath ?? this.backImagePath,
     );
   }
 

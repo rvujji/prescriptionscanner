@@ -11,11 +11,13 @@ class MedicationScheduler {
 
   MedicationScheduler(this._prescriptionsBox);
 
-  Future<void> initialize() async {
+  Future<void> initialize({
+    void Function(String? payload)? onNotificationTap,
+  }) async {
     try {
       developer.log('Initializing MedicationScheduler...', name: _logTag);
-      await _notificationService.initialize();
-      developer.log('Initialized successfully', name: _logTag);
+      // await _notificationService.initialize(onTap: onNotificationTap);
+      // developer.log('Initialized successfully', name: _logTag);
     } catch (e, stackTrace) {
       developer.log(
         'Initialization failed: $e',
@@ -60,6 +62,7 @@ class MedicationScheduler {
                     'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
                 scheduledTime: scheduledTime,
                 isForever: medication.duration.isForever,
+                imagePath: medication.frontImagePath,
               );
 
               // developer.log(
@@ -126,6 +129,7 @@ class MedicationScheduler {
                   'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
               scheduledTime: scheduledTime,
               isForever: medication.duration.isForever,
+              imagePath: medication.frontImagePath,
             );
 
             developer.log(
@@ -218,6 +222,7 @@ class MedicationScheduler {
                   'Take ${medication.dosage.quantity} ${medication.dosage.unit.name}',
               scheduledTime: scheduledTime,
               isForever: medication.duration.isForever,
+              imagePath: medication.frontImagePath,
             );
 
             developer.log(

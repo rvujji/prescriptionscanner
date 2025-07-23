@@ -5,12 +5,15 @@ import 'package:permission_handler/permission_handler.dart';
 import 'widgets/prescription_list.dart';
 import 'services/hive_service.dart';
 import 'services/medication_scheduler.dart';
+import 'services/notification_service.dart';
 import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
+// import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'services/navigation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,8 +30,20 @@ void main() async {
   //tz.initializeTimeZones();
   // tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
   await HiveService.init();
+  final FlutterTts flutterTts = FlutterTts();
+  await flutterTts.setLanguage("en-US");
+  await flutterTts.setSpeechRate(0.5);
+  // await flutterTts.speak("Hello world");
   final medicationScheduler = MedicationScheduler(
     HiveService.getPrescriptionBox(),
+  );
+  final notificationService = NotificationService();
+  await notificationService.initialize(
+    onTap: (payload) {
+      // if (payload != null && payload.isNotEmpty) {
+      //   flutterTts.speak(payload);
+      // }
+    },
   );
   await medicationScheduler.initialize();
   await requestExactAlarmPermission();
@@ -173,6 +188,7 @@ class PrescriptionScannerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Prescription Manager',
+      navigatorKey: navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,

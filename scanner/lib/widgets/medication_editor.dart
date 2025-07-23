@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/medication.dart';
 import 'times_edit.dart';
 import 'dart:developer' as developer;
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../services/navigation_service.dart';
 
 class MedicationEditor extends StatefulWidget {
   final Medication medication;
@@ -262,6 +265,36 @@ class _MedicationEditorState extends State<MedicationEditor> {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildImageSelector(
+                    'Front',
+                    widget.medication.frontImagePath,
+                    (path) {
+                      final updated = widget.medication.copyWith(
+                        frontImagePath: path,
+                      );
+                      widget.onChanged(updated);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildImageSelector(
+                    'Back',
+                    widget.medication.backImagePath,
+                    (path) {
+                      final updated = widget.medication.copyWith(
+                        backImagePath: path,
+                      );
+                      widget.onChanged(updated);
+                    },
+                  ),
+                ),
+              ],
+            ),
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
@@ -280,6 +313,82 @@ class _MedicationEditorState extends State<MedicationEditor> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(Function(String) onImageSelected) async {
+    final picker = ImagePicker();
+
+    // Show dialog to choose source
+    final source = await showDialog<ImageSource>(
+      context: navigatorKey.currentContext!,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Select Image Source'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Camera'),
+                  onTap: () => Navigator.pop(context, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo),
+                  title: const Text('Gallery'),
+                  onTap: () => Navigator.pop(context, ImageSource.gallery),
+                ),
+              ],
+            ),
+          ),
+    );
+
+    if (source != null) {
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        onImageSelected(pickedFile.path);
+      }
+    }
+  }
+
+  Widget _buildImageSelector(
+    String label,
+    String? path,
+    Function(String) onImageSelected,
+  ) {
+    return GestureDetector(
+      onTap: () => _pickImage(onImageSelected),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label Image',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 100,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+              image:
+                  path != null
+                      ? DecorationImage(
+                        image: FileImage(File(path)),
+                        fit: BoxFit.cover,
+                      )
+                      : null,
+            ),
+            child:
+                path == null
+                    ? const Center(
+                      child: Icon(Icons.add_a_photo, color: Colors.grey),
+                    )
+                    : null,
+          ),
+        ],
       ),
     );
   }

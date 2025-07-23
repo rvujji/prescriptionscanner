@@ -2,6 +2,11 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:developer' as developer;
+import 'package:flutter_tts/flutter_tts.dart';
+import 'dart:convert';
+import '../widgets/notification_viewer.dart';
+import '../services/navigation_service.dart';
+import 'package:flutter/material.dart';
 
 @pragma('vm:entry-point') // required so Flutter doesn't tree-shake this
 void notificationTapBackground(NotificationResponse response) {
@@ -14,14 +19,20 @@ class NotificationService {
   NotificationService._internal();
 
   late FlutterLocalNotificationsPlugin _notificationsPlugin;
+  final FlutterTts _flutterTts = FlutterTts();
   final String _logTag = 'NotificationService';
 
-  Future<void> initialize() async {
+  void Function(String? payload)? onNotificationTap;
+
+  Future<void> initialize({void Function(String? payload)? onTap}) async {
     try {
       developer.log('Initializing NotificationService...', name: _logTag);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
       _notificationsPlugin = FlutterLocalNotificationsPlugin();
+      await _flutterTts.setLanguage("en-US");
+      await _flutterTts.setSpeechRate(0.5);
+      onNotificationTap = onTap;
       const androidIinit = AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosInit = DarwinInitializationSettings(
         requestSoundPermission: true,
@@ -36,8 +47,27 @@ class NotificationService {
 
       await _notificationsPlugin.initialize(
         initSettings,
-        onDidReceiveNotificationResponse: (response) {
-          print('🔔 Notification clicked: ${response.payload}');
+        onDidReceiveNotificationResponse: (response) async {
+          final payload = response.payload;
+          developer.log('🔔 Notification tapped: $payload', name: _logTag);
+          if (payload != null && payload.isNotEmpty) {
+            final data = jsonDecode(payload);
+            final message = data['message'];
+            final imagePath = data['imagePath'];
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder:
+                    (_) => NotificationViewScreen(
+                      message: message,
+                      imagePath: imagePath,
+                    ),
+              ),
+            );
+            // await _flutterTts.speak(payload);
+          }
+          if (onNotificationTap != null) {
+            onNotificationTap!(payload);
+          }
         },
         onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
@@ -65,6 +95,7 @@ class NotificationService {
     String? prescriptionId,
     String? medicationId,
     bool isForever = false,
+    String? imagePath,
   }) async {
     try {
       final contextInfo =
@@ -79,7 +110,7 @@ class NotificationService {
       final androidDetails = const AndroidNotificationDetails(
         'medication_channel',
         'Medication Reminders',
-        channelDescription: 'Notifications for medication schedules',
+        channelDescription: 'Notifications for medication',
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
@@ -107,6 +138,10 @@ class NotificationService {
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: isForever ? DateTimeComponents.time : null,
+        payload: jsonEncode({
+          'message': '$title. $body',
+          'imagePath': imagePath,
+        }),
       );
 
       developer.log(
