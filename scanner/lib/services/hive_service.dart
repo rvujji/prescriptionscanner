@@ -2,12 +2,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import '../models/prescription.dart';
 import '../models/medication.dart';
+import '../models/user.dart';
 import 'medication_scheduler.dart';
 
 final Logger _logger = Logger('HiveService');
 
 class HiveService {
   static const String _prescriptionBoxName = 'prescriptions';
+  static const String _userBoxName = 'users';
 
   static Future<void> init() async {
     try {
@@ -21,8 +23,10 @@ class HiveService {
       Hive.registerAdapter(DosageUnitAdapter());
       Hive.registerAdapter(TimeUnitAdapter());
       Hive.registerAdapter(DurationPeriodAdapter());
+      Hive.registerAdapter(UserAdapter());
 
       await Hive.openBox<Prescription>(_prescriptionBoxName);
+      await Hive.openBox<User>(_userBoxName);
       _logger.info('Hive initialized and box opened successfully.');
     } catch (e, stackTrace) {
       _logger.severe('Failed to initialize Hive: $e', e, stackTrace);
@@ -55,6 +59,8 @@ class HiveService {
                 dosage: m.dosage,
                 times: m.times,
                 duration: m.duration,
+                frontImagePath: m.frontImagePath,
+                backImagePath: m.backImagePath,
               );
             }).toList(),
         notes: prescription.notes,
@@ -105,6 +111,42 @@ class HiveService {
       }
     } catch (e, stackTrace) {
       _logger.severe('Error deleting prescription [$id]: $e', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  static Box<User> getUserBox() {
+    return Hive.box<User>(_userBoxName);
+  }
+
+  static Future<void> saveUser(User user) async {
+    try {
+      _logger.info('Saving user with Email ID: ${user.name}');
+      final usersBox = getUserBox();
+      // Check if email or phone already exists
+      final alreadyExists = usersBox.values.any(
+        (u) => u.email == user.email || u.phone == user.phone,
+      );
+      if (alreadyExists) {
+        throw ("User with same email or phone already exists.");
+      }
+
+      // Create a deep copy
+      final userCopy = User(
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        password: user.password,
+        dob: user.dob,
+      );
+      await usersBox.put(userCopy.email, userCopy);
+      _logger.info('User [${user.name}] saved successfully.');
+    } catch (e, stackTrace) {
+      _logger.severe(
+        'Error saving prescription [${user.name}]: $e',
+        e,
+        stackTrace,
+      );
       rethrow;
     }
   }

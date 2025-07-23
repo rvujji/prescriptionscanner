@@ -8,7 +8,7 @@ part of 'prescription.dart';
 
 class PrescriptionAdapter extends TypeAdapter<Prescription> {
   @override
-  final int typeId = 0;
+  final int typeId = 7;
 
   @override
   Prescription read(BinaryReader reader) {

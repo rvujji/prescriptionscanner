@@ -1,0 +1,154 @@
+import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import '../../models/user.dart';
+import 'package:camera/camera.dart';
+import '../prescription_list.dart';
+import '../../services/hive_service.dart';
+import '../../services/medication_scheduler.dart';
+import '../../services/notification_service.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+class LoginScreen extends StatefulWidget {
+  final VoidCallback onRegisterTap;
+
+  const LoginScreen({Key? key, required this.onRegisterTap}) : super(key: key);
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailOrPhoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  void _submitLogin(String emailOrPhone, String password) async {
+    final usersBox = Hive.box<User>('users');
+
+    User? user = usersBox.values.firstWhere(
+      (u) =>
+          (u.email == emailOrPhone || u.phone == emailOrPhone) &&
+          u.password == password,
+      orElse: () => null as User, // This works only if UserModel? user
+    );
+
+    if (user == null) {
+      _showError("Invalid credentials");
+      return;
+    }
+
+    // Login success
+    final cameras = await availableCameras();
+    final FlutterTts flutterTts = FlutterTts();
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setSpeechRate(0.5);
+    final medicationScheduler = MedicationScheduler(
+      HiveService.getPrescriptionBox(),
+    );
+    final notificationService = NotificationService();
+    await notificationService.initialize(onTap: (payload) {});
+    await medicationScheduler.initialize();
+    await medicationScheduler.scheduleAllMedications();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => PrescriptionListScreen(
+              initialPrescriptions: HiveService.getAllPrescriptions(),
+              cameras: cameras,
+            ),
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  void dispose() {
+    _emailOrPhoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Login")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _emailOrPhoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Email or Phone Number',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter your email or phone number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter your password';
+                  }
+                  if (value.trim().length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    _submitLogin(
+                      _emailOrPhoneController.text.trim(),
+                      _passwordController.text.trim(),
+                    );
+                  }
+                },
+                child: const Text("Login"),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: widget.onRegisterTap,
+                child: const Text("Don't have an account? Register"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

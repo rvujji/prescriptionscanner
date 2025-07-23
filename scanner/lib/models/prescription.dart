@@ -4,7 +4,7 @@ import 'medication.dart'; // Import your Medication model
 
 part 'prescription.g.dart'; // For Hive TypeAdapter
 
-@HiveType(typeId: 0) // Unique ID for Hive (must be different from Medication)
+@HiveType(typeId: 7) // Unique ID for Hive (must be different from Medication)
 @JsonSerializable() // Annotation for JSON serialization
 class Prescription extends HiveObject {
   @HiveField(0)
