@@ -68,7 +68,7 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
     } else {
       // iOS
       final status = await Permission.photos.request();
-      if (status.isPermanentlyDenied  || status.isRestricted) {
+      if (status.isPermanentlyDenied || status.isRestricted) {
         _showError('Please enable photo access in Settings');
         await openAppSettings();
         return false;
@@ -105,17 +105,16 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
     _logger.info('Starting OCR + Parsing for: $imagePath');
     try {
       final text = await _scanner.scanImage(imagePath);
-      if (text != null && text.isNotEmpty) {
-        _logger.info('Text extracted successfully. Parsing...');
-        final prescription = _parser.parseFromText(text, imagePath);
-        await HiveService.savePrescription(prescription);
-        _logger.info('Prescription saved to Hive: ${prescription.id}');
-        setState(() => _prescriptions.add(prescription));
-        Navigator.pop(context, prescription);
-      } else {
+      if (text == null || text.isEmpty) {
         _logger.warning('OCR returned empty text');
         _showError('No text could be extracted from the image');
       }
+      _logger.info('Text Parsing...');
+      final prescription = _parser.parseFromText(text ?? '', imagePath);
+      await HiveService.savePrescription(prescription);
+      _logger.info('Prescription saved to Hive: ${prescription.id}');
+      setState(() => _prescriptions.add(prescription));
+      Navigator.pop(context, prescription);
     } catch (e, stack) {
       _logger.severe('Error processing image: $e', e, stack);
       _showError('Error processing image: $e');
