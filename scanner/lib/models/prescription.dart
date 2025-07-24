@@ -5,18 +5,18 @@ import 'medication.dart'; // Import your Medication model
 part 'prescription.g.dart'; // For Hive TypeAdapter
 
 @HiveType(typeId: 7) // Unique ID for Hive (must be different from Medication)
-@JsonSerializable() // Annotation for JSON serialization
+@JsonSerializable()
 class Prescription extends HiveObject {
   @HiveField(0)
-  @JsonKey(name: 'id') // Optional: if JSON key differs from Dart field name
-  String id; // Use String for server IDs
+  @JsonKey(name: 'id')
+  String id;
 
   @HiveField(1)
   @JsonKey(name: 'date')
-  DateTime date; // json_serializable handles DateTime to ISO 8601 string and back
+  DateTime date;
 
   @HiveField(2)
-  @JsonKey(name: 'patient_name') // Example: JSON key might be snake_case
+  @JsonKey(name: 'patient_name')
   String patientName;
 
   @HiveField(3)
@@ -25,19 +25,18 @@ class Prescription extends HiveObject {
 
   @HiveField(4)
   @JsonKey(name: 'medications')
-  List<Medication> medications; // json_serializable automatically handles nested @JsonSerializable classes
+  List<Medication> medications;
 
   @HiveField(5)
   @JsonKey(name: 'notes')
   String notes;
 
   @HiveField(6)
-  // imagePath is typically a local file path.
-  // For the server, you would upload the image separately and store a URL.
-  // So, you might NOT want to send this field directly in the JSON.
-  // If you want to omit it from JSON, use @JsonKey(ignore: true)
-  // If you want to send it but expect a URL from server, consider a separate field for URL.
   String imagePath;
+
+  @HiveField(7)
+  @JsonKey(name: 'userEmail')
+  String userEmail;
 
   Prescription({
     required this.id,
@@ -47,14 +46,12 @@ class Prescription extends HiveObject {
     required this.medications,
     required this.notes,
     required this.imagePath,
+    required this.userEmail, // Add to constructor
   });
 
-  // --- JSON Serialization Methods ---
-  // A factory constructor to create a Prescription from a JSON map
   factory Prescription.fromJson(Map<String, dynamic> json) =>
       _$PrescriptionFromJson(json);
 
-  // A method to convert a Prescription object to a JSON map
   Map<String, dynamic> toJson() => _$PrescriptionToJson(this);
 
   Prescription copyWith({
@@ -65,6 +62,7 @@ class Prescription extends HiveObject {
     List<Medication>? medications,
     String? notes,
     String? imagePath,
+    String? userEmail, // Add here
   }) {
     return Prescription(
       id: id ?? this.id,
@@ -74,6 +72,7 @@ class Prescription extends HiveObject {
       medications: medications ?? this.medications,
       notes: notes ?? this.notes,
       imagePath: imagePath ?? this.imagePath,
+      userEmail: userEmail ?? this.userEmail,
     );
   }
 }

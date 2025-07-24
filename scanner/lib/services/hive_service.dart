@@ -65,6 +65,7 @@ class HiveService {
             }).toList(),
         notes: prescription.notes,
         imagePath: prescription.imagePath,
+        userEmail: prescription.userEmail,
       );
 
       await box.put(prescriptionCopy.id, prescriptionCopy);
@@ -87,7 +88,17 @@ class HiveService {
   static List<Prescription> getAllPrescriptions() {
     try {
       final box = getPrescriptionBox();
-      final prescriptions = box.values.toList();
+      final loggedInUser = HiveService.getLoggedInUser();
+      if (loggedInUser == null) {
+        _logger.warning('No user is logged in.');
+        return [];
+      }
+      final prescriptions =
+          box.values
+              .where(
+                (prescription) => prescription.userEmail == loggedInUser.email,
+              )
+              .toList();
       _logger.fine('Retrieved ${prescriptions.length} prescriptions.');
       return prescriptions;
     } catch (e, stackTrace) {
@@ -179,7 +190,7 @@ class HiveService {
     }
   }
 
-  User? getLoggedInUser() {
+  static User? getLoggedInUser() {
     final box = Hive.box<User>('users');
     return box.values.firstWhere(
       (user) => user.loggedIn,

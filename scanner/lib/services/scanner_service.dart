@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:logging/logging.dart';
-
+import 'hive_service.dart';
 import '../models/prescription.dart';
 import '../models/medication.dart';
 
@@ -69,6 +69,7 @@ class PrescriptionParser {
       medications: medications,
       notes: 'Automatically scanned prescription',
       imagePath: imagePath,
+      userEmail: HiveService.getLoggedInUser()?.email ?? 'unknown',
     );
 
     _logger.info(

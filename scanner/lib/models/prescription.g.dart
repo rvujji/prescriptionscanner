@@ -24,13 +24,14 @@ class PrescriptionAdapter extends TypeAdapter<Prescription> {
       medications: (fields[4] as List).cast<Medication>(),
       notes: fields[5] as String,
       imagePath: fields[6] as String,
+      userEmail: fields[7] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Prescription obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class PrescriptionAdapter extends TypeAdapter<Prescription> {
       ..writeByte(5)
       ..write(obj.notes)
       ..writeByte(6)
-      ..write(obj.imagePath);
+      ..write(obj.imagePath)
+      ..writeByte(7)
+      ..write(obj.userEmail);
   }
 
   @override
@@ -72,6 +75,7 @@ Prescription _$PrescriptionFromJson(Map<String, dynamic> json) => Prescription(
           .toList(),
       notes: json['notes'] as String,
       imagePath: json['imagePath'] as String,
+      userEmail: json['userEmail'] as String,
     );
 
 Map<String, dynamic> _$PrescriptionToJson(Prescription instance) =>
@@ -83,4 +87,5 @@ Map<String, dynamic> _$PrescriptionToJson(Prescription instance) =>
       'medications': instance.medications,
       'notes': instance.notes,
       'imagePath': instance.imagePath,
+      'userEmail': instance.userEmail,
     };
