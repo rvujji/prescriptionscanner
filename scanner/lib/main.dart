@@ -6,10 +6,12 @@ import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'package:camera/camera.dart';
 import 'services/hive_service.dart';
 import 'services/navigation_service.dart';
 import 'widgets/auth/login_screen.dart';
 import 'widgets/auth/register_screen.dart';
+import 'widgets/prescription_list.dart';
 
 void main() async {
   runZonedGuarded(
@@ -91,10 +93,37 @@ class PrescriptionScannerApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: LoginScreen(
-        onRegisterTap: () {
-          navigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (_) => RegisterScreen()),
+      home: FutureBuilder<bool>(
+        future: HiveService.isLoggedIn(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.data == true) {
+            // If already logged in, load prescriptions directly
+            return FutureBuilder<List<CameraDescription>>(
+              future: availableCameras(),
+              builder: (context, cameraSnapshot) {
+                if (!cameraSnapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return PrescriptionListScreen(
+                  initialPrescriptions: HiveService.getAllPrescriptions(),
+                  cameras: cameraSnapshot.data!,
+                );
+              },
+            );
+          }
+
+          // If not logged in, show login screen
+          return LoginScreen(
+            onRegisterTap: () {
+              navigatorKey.currentState?.push(
+                MaterialPageRoute(builder: (_) => RegisterScreen()),
+              );
+            },
           );
         },
       ),

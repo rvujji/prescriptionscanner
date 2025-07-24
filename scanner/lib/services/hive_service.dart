@@ -186,4 +186,9 @@ class HiveService {
       orElse: () => null as User,
     );
   }
+
+  static Future<bool> isLoggedIn() async {
+    final box = Hive.box<User>(_userBoxName);
+    return box.values.any((user) => user.loggedIn);
+  }
 }
