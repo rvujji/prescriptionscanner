@@ -19,11 +19,15 @@ class User extends HiveObject {
   @HiveField(4)
   DateTime dob;
 
+  @HiveField(5)
+  bool loggedIn; // 🔄 New field
+
   User({
     required this.name,
     required this.email,
     required this.phone,
     required this.password,
     required this.dob,
+    this.loggedIn = false, // default false
   });
 }

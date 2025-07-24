@@ -138,6 +138,7 @@ class HiveService {
         phone: user.phone,
         password: user.password,
         dob: user.dob,
+        loggedIn: user.loggedIn,
       );
       await usersBox.put(userCopy.email, userCopy);
       _logger.info('User [${user.name}] saved successfully.');
@@ -164,5 +165,25 @@ class HiveService {
     if (user == null) {
       throw ("Invalid credentials");
     }
+    user.loggedIn = true;
+    await user.save();
+  }
+
+  static Future<void> logout() async {
+    final box = Hive.box<User>('users');
+    for (final user in box.values) {
+      if (user.loggedIn) {
+        user.loggedIn = false;
+        await user.save(); // Save updated state
+      }
+    }
+  }
+
+  User? getLoggedInUser() {
+    final box = Hive.box<User>('users');
+    return box.values.firstWhere(
+      (user) => user.loggedIn,
+      orElse: () => null as User,
+    );
   }
 }

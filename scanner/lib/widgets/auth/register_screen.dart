@@ -40,6 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       phone: phone,
       password: password,
       dob: dob!,
+      loggedIn: false,
     );
     try {
       await HiveService.saveUser(user);

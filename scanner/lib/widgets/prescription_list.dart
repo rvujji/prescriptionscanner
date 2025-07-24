@@ -5,6 +5,10 @@ import '../models/prescription.dart';
 import '../services/prescription_service.dart';
 import '../widgets/prescription_card.dart';
 import 'prescription_add.dart';
+import '../widgets/auth/login_screen.dart';
+import '../widgets/auth/register_screen.dart';
+import '../services/navigation_service.dart';
+import '../services/hive_service.dart';
 
 // Create a logger for this specific screen
 final Logger _prescriptionListLogger = Logger('PrescriptionListScreen');
@@ -84,6 +88,42 @@ class _PrescriptionListScreenState extends State<PrescriptionListScreen> {
             },
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Prescription Manager',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                HiveService.logout();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder:
+                        (_) => LoginScreen(
+                          onRegisterTap: () {
+                            navigatorKey.currentState?.push(
+                              MaterialPageRoute(
+                                builder: (_) => RegisterScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                  ),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        ),
       ),
       body: ListView.builder(
         itemCount: _prescriptions.length,
