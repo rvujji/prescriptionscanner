@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.oten.scanner"
+    namespace = "com.vuzi.scanner"
     compileSdk = flutter.compileSdkVersion.toInt()
 
     ndkVersion = "27.0.12077973" //raj
 
     defaultConfig {
-        applicationId = "com.oten.scanner"
+        applicationId = "com.vuzi.scanner"
         minSdk = flutter.minSdkVersion.toInt()
         targetSdk = flutter.targetSdkVersion.toInt()
         versionCode = flutter.versionCode.toInt()

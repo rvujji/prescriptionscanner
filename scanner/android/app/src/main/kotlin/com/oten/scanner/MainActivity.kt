@@ -1,5 +1,5 @@
 //Raj: Code changed by Raj to support notifications
-package com.oten.scanner
+package com.vuzi.scanner
 
 import android.os.Bundle
 import android.os.Build
