@@ -320,15 +320,15 @@ Medication _$MedicationFromJson(Map<String, dynamic> json) => Medication(
           .toList(),
       duration:
           DurationPeriod.fromJson(json['duration'] as Map<String, dynamic>),
-      frontImagePath: json['frontImagePath'] as String?,
-      backImagePath: json['backImagePath'] as String?,
-      isSynced: json['isSynced'] as bool? ?? false,
-      createdAt: json['createdAt'] == null
+      frontImagePath: json['frontimagepath'] as String?,
+      backImagePath: json['backimagepath'] as String?,
+      isSynced: json['issynced'] as bool? ?? false,
+      createdAt: json['createdat'] == null
           ? null
-          : DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] == null
+          : DateTime.parse(json['createdat'] as String),
+      updatedAt: json['updatedat'] == null
           ? null
-          : DateTime.parse(json['updatedAt'] as String),
+          : DateTime.parse(json['updatedat'] as String),
     );
 
 Map<String, dynamic> _$MedicationToJson(Medication instance) =>
@@ -338,11 +338,11 @@ Map<String, dynamic> _$MedicationToJson(Medication instance) =>
       'dosage': instance.dosage,
       'times': instance.times,
       'duration': instance.duration,
-      'frontImagePath': instance.frontImagePath,
-      'backImagePath': instance.backImagePath,
-      'isSynced': instance.isSynced,
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
+      'frontimagepath': instance.frontImagePath,
+      'backimagepath': instance.backImagePath,
+      'issynced': instance.isSynced,
+      'createdat': instance.createdAt?.toIso8601String(),
+      'updatedat': instance.updatedAt?.toIso8601String(),
     };
 
 Dosage _$DosageFromJson(Map<String, dynamic> json) => Dosage(

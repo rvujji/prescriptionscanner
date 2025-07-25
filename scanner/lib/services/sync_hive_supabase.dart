@@ -34,7 +34,7 @@ class SyncService {
     final response = await _supabase
         .from('app_users')
         .select()
-        .neq('is_synced', false);
+        .neq('issynced', false);
 
     for (final record in response) {
       final remoteUser = AppUser.fromJson(record);

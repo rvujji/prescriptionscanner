@@ -1,3 +1,4 @@
+// hive_service.dart
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
@@ -189,12 +190,11 @@ class HiveService {
       (u) =>
           (u.email == emailOrPhone || u.phone == emailOrPhone) &&
           u.passwordHash == hashedPassword,
-      orElse: () => null as AppUser, // This works only if UserModel? user
+      orElse:
+          () =>
+              throw ("Invalid credentials"), // This works only if UserModel? user
     );
 
-    if (user == null) {
-      throw ("Invalid credentials");
-    }
     user.loggedIn = true;
     await user.save();
   }

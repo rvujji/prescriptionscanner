@@ -22,22 +22,27 @@ class Medication {
   DurationPeriod duration;
 
   @HiveField(5)
+  @JsonKey(name: 'frontimagepath')
   String? frontImagePath;
 
   @HiveField(6)
+  @JsonKey(name: 'backimagepath')
   String? backImagePath;
 
   @HiveField(7)
+  @JsonKey(name: 'issynced')
   bool isSynced;
 
   @HiveField(8)
+  @JsonKey(name: 'createdat')
   DateTime? createdAt;
 
   @HiveField(9)
+  @JsonKey(name: 'updatedat')
   DateTime? updatedAt;
 
   Medication({
-    String? id, // Make optional for creation
+    String? id,
     required this.name,
     required this.dosage,
     required this.times,
@@ -66,7 +71,7 @@ class Medication {
     DateTime? updatedAt,
   }) {
     return Medication(
-      id: id ?? this.id, // Include ID in copyWith
+      id: id ?? this.id,
       name: name ?? this.name,
       dosage: dosage ?? this.dosage,
       times: times ?? List.from(this.times),

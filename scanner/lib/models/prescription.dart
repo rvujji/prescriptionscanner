@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'medication.dart'; // Import your Medication model
+import 'medication.dart';
+import 'package:uuid/uuid.dart';
 
 part 'prescription.g.dart'; // For Hive TypeAdapter
 
@@ -14,9 +15,11 @@ class Prescription extends HiveObject {
   DateTime date;
 
   @HiveField(2)
+  @JsonKey(name: 'patientname')
   String patientName;
 
   @HiveField(3)
+  @JsonKey(name: 'doctorname')
   String doctorName;
 
   @HiveField(4)
@@ -26,22 +29,27 @@ class Prescription extends HiveObject {
   String notes;
 
   @HiveField(6)
+  @JsonKey(name: 'imagepath')
   String imagePath;
 
   @HiveField(7)
+  @JsonKey(name: 'userid')
   String userId;
 
   @HiveField(8)
+  @JsonKey(name: 'issynced')
   bool isSynced;
 
   @HiveField(9)
+  @JsonKey(name: 'createdat')
   DateTime? createdAt;
 
   @HiveField(10)
+  @JsonKey(name: 'updatedat')
   DateTime? updatedAt;
 
   Prescription({
-    required this.id,
+    String? id,
     required this.date,
     required this.patientName,
     required this.doctorName,
@@ -52,7 +60,7 @@ class Prescription extends HiveObject {
     this.isSynced = false,
     this.createdAt,
     this.updatedAt,
-  });
+  }) : id = id ?? const Uuid().v4();
 
   factory Prescription.fromJson(Map<String, dynamic> json) =>
       _$PrescriptionFromJson(json);

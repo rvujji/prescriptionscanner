@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submitLogin(String emailOrPhone, String password) async {
     try {
-      HiveService.validateUser(emailOrPhone, password);
+      await HiveService.validateUser(emailOrPhone, password);
     } catch (e) {
       _showError("$e");
       return;

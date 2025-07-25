@@ -90,40 +90,40 @@ AppUser _$AppUserFromJson(Map<String, dynamic> json) => AppUser(
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
-      passwordHash: json['passwordHash'] as String,
+      passwordHash: json['passwordhash'] as String,
       phone: json['phone'] as String,
       dob: DateTime.parse(json['dob'] as String),
       gender: json['gender'] as String,
       country: json['country'] as String,
-      loggedIn: json['loggedIn'] as bool,
-      accessToken: json['accessToken'] as String?,
-      refreshToken: json['refreshToken'] as String?,
-      tokenExpiry: json['tokenExpiry'] == null
+      loggedIn: json['loggedin'] as bool,
+      accessToken: json['accesstoken'] as String?,
+      refreshToken: json['refreshtoken'] as String?,
+      tokenExpiry: json['tokenexpiry'] == null
           ? null
-          : DateTime.parse(json['tokenExpiry'] as String),
-      isSynced: json['isSynced'] as bool? ?? false,
-      createdAt: json['createdAt'] == null
+          : DateTime.parse(json['tokenexpiry'] as String),
+      isSynced: json['issynced'] as bool? ?? false,
+      createdAt: json['createdat'] == null
           ? null
-          : DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] == null
+          : DateTime.parse(json['createdat'] as String),
+      updatedAt: json['updatedat'] == null
           ? null
-          : DateTime.parse(json['updatedAt'] as String),
+          : DateTime.parse(json['updatedat'] as String),
     );
 
 Map<String, dynamic> _$AppUserToJson(AppUser instance) => <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
       'email': instance.email,
-      'passwordHash': instance.passwordHash,
+      'passwordhash': instance.passwordHash,
       'phone': instance.phone,
       'dob': instance.dob.toIso8601String(),
       'gender': instance.gender,
       'country': instance.country,
-      'loggedIn': instance.loggedIn,
-      'accessToken': instance.accessToken,
-      'refreshToken': instance.refreshToken,
-      'tokenExpiry': instance.tokenExpiry?.toIso8601String(),
-      'isSynced': instance.isSynced,
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
+      'loggedin': instance.loggedIn,
+      'accesstoken': instance.accessToken,
+      'refreshtoken': instance.refreshToken,
+      'tokenexpiry': instance.tokenExpiry?.toIso8601String(),
+      'issynced': instance.isSynced,
+      'createdat': instance.createdAt?.toIso8601String(),
+      'updatedat': instance.updatedAt?.toIso8601String(),
     };

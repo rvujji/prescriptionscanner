@@ -1,3 +1,4 @@
+// scanner/lib/services/scanner_service.dart
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:logging/logging.dart';
 import 'hive_service.dart';

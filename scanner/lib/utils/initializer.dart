@@ -7,10 +7,22 @@ import '../services/supabase_service.dart';
 
 class AppInitializer {
   static Future<void> initializeAll() async {
+    await testNetwork();
     await HiveService.init();
     await SupabaseService().initialize();
     await requestNotificationPermission();
     await requestExactAlarmPermission();
+  }
+
+  static Future<void> testNetwork() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        print('✅ Device is online');
+      }
+    } catch (e) {
+      print('❌ No Internet: $e');
+    }
   }
 
   static Future<void> requestNotificationPermission() async {

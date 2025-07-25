@@ -17,7 +17,7 @@ class PrescriptionAdapter extends TypeAdapter<Prescription> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Prescription(
-      id: fields[0] as String,
+      id: fields[0] as String?,
       date: fields[1] as DateTime,
       patientName: fields[2] as String,
       doctorName: fields[3] as String,
@@ -75,36 +75,36 @@ class PrescriptionAdapter extends TypeAdapter<Prescription> {
 // **************************************************************************
 
 Prescription _$PrescriptionFromJson(Map<String, dynamic> json) => Prescription(
-      id: json['id'] as String,
+      id: json['id'] as String?,
       date: DateTime.parse(json['date'] as String),
-      patientName: json['patientName'] as String,
-      doctorName: json['doctorName'] as String,
+      patientName: json['patientname'] as String,
+      doctorName: json['doctorname'] as String,
       medications: (json['medications'] as List<dynamic>)
           .map((e) => Medication.fromJson(e as Map<String, dynamic>))
           .toList(),
       notes: json['notes'] as String,
-      imagePath: json['imagePath'] as String,
-      userId: json['userId'] as String,
-      isSynced: json['isSynced'] as bool? ?? false,
-      createdAt: json['createdAt'] == null
+      imagePath: json['imagepath'] as String,
+      userId: json['userid'] as String,
+      isSynced: json['issynced'] as bool? ?? false,
+      createdAt: json['createdat'] == null
           ? null
-          : DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] == null
+          : DateTime.parse(json['createdat'] as String),
+      updatedAt: json['updatedat'] == null
           ? null
-          : DateTime.parse(json['updatedAt'] as String),
+          : DateTime.parse(json['updatedat'] as String),
     );
 
 Map<String, dynamic> _$PrescriptionToJson(Prescription instance) =>
     <String, dynamic>{
       'id': instance.id,
       'date': instance.date.toIso8601String(),
-      'patientName': instance.patientName,
-      'doctorName': instance.doctorName,
+      'patientname': instance.patientName,
+      'doctorname': instance.doctorName,
       'medications': instance.medications,
       'notes': instance.notes,
-      'imagePath': instance.imagePath,
-      'userId': instance.userId,
-      'isSynced': instance.isSynced,
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'updatedAt': instance.updatedAt?.toIso8601String(),
+      'imagepath': instance.imagePath,
+      'userid': instance.userId,
+      'issynced': instance.isSynced,
+      'createdat': instance.createdAt?.toIso8601String(),
+      'updatedat': instance.updatedAt?.toIso8601String(),
     };

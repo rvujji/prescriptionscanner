@@ -16,6 +16,7 @@ class AppUser extends HiveObject {
   String email;
 
   @HiveField(3)
+  @JsonKey(name: 'passwordhash')
   String passwordHash;
 
   @HiveField(4)
@@ -31,24 +32,31 @@ class AppUser extends HiveObject {
   String country;
 
   @HiveField(8)
+  @JsonKey(name: 'loggedin')
   bool loggedIn;
 
   @HiveField(9)
+  @JsonKey(name: 'accesstoken')
   String? accessToken;
 
   @HiveField(10)
+  @JsonKey(name: 'refreshtoken')
   String? refreshToken;
 
   @HiveField(11)
+  @JsonKey(name: 'tokenexpiry')
   DateTime? tokenExpiry;
 
   @HiveField(12)
+  @JsonKey(name: 'issynced')
   bool isSynced;
 
   @HiveField(13)
+  @JsonKey(name: 'createdat')
   DateTime? createdAt;
 
   @HiveField(14)
+  @JsonKey(name: 'updatedat')
   DateTime? updatedAt;
 
   AppUser({
