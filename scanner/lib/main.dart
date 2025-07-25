@@ -28,7 +28,7 @@ void main() async {
         );
       });
 
-      AppInitializer.initializeAll();
+      await AppInitializer.initializeAll();
       runApp(PrescriptionScannerApp());
     },
     (error, stackTrace) {
