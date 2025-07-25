@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+
 import '../../services/hive_service.dart';
-import '../../models/user.dart';
+import '../../models/appuser.dart';
+import '../../utils/password_manager.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -17,40 +20,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
+
   DateTime? dob;
+  String? gender;
+  String? country;
+
+  final List<String> genderOptions = ['Male', 'Female', 'Other'];
+  final List<String> countryOptions = ['India', 'USA', 'UK', 'Other'];
 
   void _register() async {
-    final name = nameController.text.trim();
-    final email = emailController.text.trim();
-    final phone = phoneController.text.trim();
-    final password = passwordController.text;
-
-    if (name.isEmpty ||
-        email.isEmpty ||
-        phone.isEmpty ||
-        password.isEmpty ||
-        dob == null) {
-      _showError("Please fill all fields");
+    if (!_formKey.currentState!.validate() ||
+        dob == null ||
+        gender == null ||
+        country == null) {
+      _showError("Please fill all fields including DOB, Gender, and Country");
       return;
     }
+    final hashedPassword = PasswordUtils.hashPassword(passwordController.text);
 
-    final user = User(
-      name: name,
-      email: email,
-      phone: phone,
-      password: password,
+    final appUser = AppUser(
+      id: const Uuid().v4(),
+      name: nameController.text.trim(),
+      email: emailController.text.trim(),
+      passwordHash: hashedPassword,
+      phone: phoneController.text.trim(),
       dob: dob!,
+      gender: gender!,
+      country: country!,
       loggedIn: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
+
     try {
-      await HiveService.saveUser(user);
+      await HiveService.saveUser(appUser);
     } catch (e) {
-      _showError("$e");
+      _showError("Failed to save user: $e");
       return;
     }
+
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text("Registered as $name")));
+    ).showSnackBar(SnackBar(content: Text("Registered as ${appUser.name}")));
 
     Navigator.pop(context);
   }
@@ -62,7 +73,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (selected != null) setState(() => dob = selected);
+    if (selected != null) {
+      setState(() => dob = selected);
+    }
   }
 
   void _showError(String message) {
@@ -146,6 +159,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: const Text("Pick DOB"),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: gender,
+                items:
+                    genderOptions
+                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .toList(),
+                onChanged: (value) => setState(() => gender = value),
+                decoration: const InputDecoration(labelText: "Gender"),
+                validator:
+                    (value) => value == null ? "Please select gender" : null,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: country,
+                items:
+                    countryOptions
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                onChanged: (value) => setState(() => country = value),
+                decoration: const InputDecoration(labelText: "Country"),
+                validator:
+                    (value) => value == null ? "Please select country" : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(

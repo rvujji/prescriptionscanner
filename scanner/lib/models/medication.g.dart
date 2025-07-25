@@ -24,13 +24,16 @@ class MedicationAdapter extends TypeAdapter<Medication> {
       duration: fields[4] as DurationPeriod,
       frontImagePath: fields[5] as String?,
       backImagePath: fields[6] as String?,
+      isSynced: fields[7] as bool,
+      createdAt: fields[8] as DateTime?,
+      updatedAt: fields[9] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Medication obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +47,13 @@ class MedicationAdapter extends TypeAdapter<Medication> {
       ..writeByte(5)
       ..write(obj.frontImagePath)
       ..writeByte(6)
-      ..write(obj.backImagePath);
+      ..write(obj.backImagePath)
+      ..writeByte(7)
+      ..write(obj.isSynced)
+      ..writeByte(8)
+      ..write(obj.createdAt)
+      ..writeByte(9)
+      ..write(obj.updatedAt);
   }
 
   @override
@@ -313,6 +322,13 @@ Medication _$MedicationFromJson(Map<String, dynamic> json) => Medication(
           DurationPeriod.fromJson(json['duration'] as Map<String, dynamic>),
       frontImagePath: json['frontImagePath'] as String?,
       backImagePath: json['backImagePath'] as String?,
+      isSynced: json['isSynced'] as bool? ?? false,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
     );
 
 Map<String, dynamic> _$MedicationToJson(Medication instance) =>
@@ -324,6 +340,9 @@ Map<String, dynamic> _$MedicationToJson(Medication instance) =>
       'duration': instance.duration,
       'frontImagePath': instance.frontImagePath,
       'backImagePath': instance.backImagePath,
+      'isSynced': instance.isSynced,
+      'createdAt': instance.createdAt?.toIso8601String(),
+      'updatedAt': instance.updatedAt?.toIso8601String(),
     };
 
 Dosage _$DosageFromJson(Map<String, dynamic> json) => Dosage(

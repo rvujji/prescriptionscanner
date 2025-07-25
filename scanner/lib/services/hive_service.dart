@@ -1,15 +1,18 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:uuid/uuid.dart';
 import '../models/prescription.dart';
 import '../models/medication.dart';
-import '../models/user.dart';
+import '../models/appuser.dart';
+import '../utils/password_manager.dart';
 import 'medication_scheduler.dart';
+import 'sync_hive_supabase.dart';
 
 final Logger _logger = Logger('HiveService');
 
 class HiveService {
-  static const String _prescriptionBoxName = 'prescriptions';
-  static const String _userBoxName = 'users';
+  static const String prescriptionBoxName = 'prescriptions';
+  static const String userBoxName = 'appusers';
 
   static Future<void> init() async {
     try {
@@ -23,10 +26,10 @@ class HiveService {
       Hive.registerAdapter(DosageUnitAdapter());
       Hive.registerAdapter(TimeUnitAdapter());
       Hive.registerAdapter(DurationPeriodAdapter());
-      Hive.registerAdapter(UserAdapter());
+      Hive.registerAdapter(AppUserAdapter());
 
-      await Hive.openBox<Prescription>(_prescriptionBoxName);
-      await Hive.openBox<User>(_userBoxName);
+      await Hive.openBox<Prescription>(prescriptionBoxName);
+      await Hive.openBox<AppUser>(userBoxName);
       _logger.info('Hive initialized and box opened successfully.');
     } catch (e, stackTrace) {
       _logger.severe('Failed to initialize Hive: $e', e, stackTrace);
@@ -35,7 +38,7 @@ class HiveService {
   }
 
   static Box<Prescription> getPrescriptionBox() {
-    return Hive.box<Prescription>(_prescriptionBoxName);
+    return Hive.box<Prescription>(prescriptionBoxName);
   }
 
   static Future<void> savePrescription(Prescription prescription) async {
@@ -61,11 +64,17 @@ class HiveService {
                 duration: m.duration,
                 frontImagePath: m.frontImagePath,
                 backImagePath: m.backImagePath,
+                isSynced: m.isSynced,
+                createdAt: m.createdAt ?? DateTime.now(),
+                updatedAt: m.updatedAt ?? DateTime.now(),
               );
             }).toList(),
         notes: prescription.notes,
         imagePath: prescription.imagePath,
-        userEmail: prescription.userEmail,
+        userId: prescription.userId,
+        isSynced: prescription.isSynced,
+        createdAt: prescription.createdAt ?? DateTime.now(),
+        updatedAt: prescription.updatedAt ?? DateTime.now(),
       );
 
       await box.put(prescriptionCopy.id, prescriptionCopy);
@@ -75,6 +84,7 @@ class HiveService {
       );
 
       _logger.info('Prescription [${prescription.id}] saved successfully.');
+      SyncService().syncPrescriptions();
     } catch (e, stackTrace) {
       _logger.severe(
         'Error saving prescription [${prescription.id}]: $e',
@@ -95,9 +105,7 @@ class HiveService {
       }
       final prescriptions =
           box.values
-              .where(
-                (prescription) => prescription.userEmail == loggedInUser.email,
-              )
+              .where((prescription) => prescription.userId == loggedInUser.id)
               .toList();
       _logger.fine('Retrieved ${prescriptions.length} prescriptions.');
       return prescriptions;
@@ -117,6 +125,7 @@ class HiveService {
       if (index != -1) {
         await box.deleteAt(index);
         _logger.info('Prescription [$id] deleted.');
+        SyncService().syncPrescriptions();
       } else {
         _logger.warning('Prescription with ID $id not found for deletion.');
       }
@@ -126,11 +135,11 @@ class HiveService {
     }
   }
 
-  static Box<User> getUserBox() {
-    return Hive.box<User>(_userBoxName);
+  static Box<AppUser> getUserBox() {
+    return Hive.box<AppUser>(userBoxName);
   }
 
-  static Future<void> saveUser(User user) async {
+  static Future<void> saveUser(AppUser user) async {
     try {
       _logger.info('Saving user with Email ID: ${user.name}');
       final usersBox = getUserBox();
@@ -143,16 +152,26 @@ class HiveService {
       }
 
       // Create a deep copy
-      final userCopy = User(
+      final userCopy = AppUser(
+        id: user.id.isNotEmpty ? user.id : const Uuid().v4(),
         name: user.name,
         email: user.email,
+        passwordHash: user.passwordHash,
         phone: user.phone,
-        password: user.password,
         dob: user.dob,
+        gender: user.gender,
+        country: user.country,
         loggedIn: user.loggedIn,
+        accessToken: user.accessToken,
+        refreshToken: user.refreshToken,
+        tokenExpiry: user.tokenExpiry,
+        isSynced: user.isSynced,
+        createdAt: user.createdAt ?? DateTime.now(),
+        updatedAt: user.updatedAt ?? DateTime.now(),
       );
-      await usersBox.put(userCopy.email, userCopy);
+      await usersBox.put(userCopy.id, userCopy);
       _logger.info('User [${user.name}] saved successfully.');
+      SyncService().syncUsers();
     } catch (e, stackTrace) {
       _logger.severe(
         'Error saving prescription [${user.name}]: $e',
@@ -164,13 +183,13 @@ class HiveService {
   }
 
   static Future<void> validateUser(String emailOrPhone, String password) async {
-    final usersBox = Hive.box<User>('users');
-
-    User? user = usersBox.values.firstWhere(
+    final usersBox = Hive.box<AppUser>(userBoxName);
+    final hashedPassword = PasswordUtils.hashPassword(password);
+    AppUser? user = usersBox.values.firstWhere(
       (u) =>
           (u.email == emailOrPhone || u.phone == emailOrPhone) &&
-          u.password == password,
-      orElse: () => null as User, // This works only if UserModel? user
+          u.passwordHash == hashedPassword,
+      orElse: () => null as AppUser, // This works only if UserModel? user
     );
 
     if (user == null) {
@@ -181,7 +200,7 @@ class HiveService {
   }
 
   static Future<void> logout() async {
-    final box = Hive.box<User>('users');
+    final box = Hive.box<AppUser>(userBoxName);
     for (final user in box.values) {
       if (user.loggedIn) {
         user.loggedIn = false;
@@ -190,16 +209,16 @@ class HiveService {
     }
   }
 
-  static User? getLoggedInUser() {
-    final box = Hive.box<User>('users');
+  static AppUser? getLoggedInUser() {
+    final box = Hive.box<AppUser>(userBoxName);
     return box.values.firstWhere(
       (user) => user.loggedIn,
-      orElse: () => null as User,
+      orElse: () => null as AppUser,
     );
   }
 
   static Future<bool> isLoggedIn() async {
-    final box = Hive.box<User>(_userBoxName);
+    final box = Hive.box<AppUser>(userBoxName);
     return box.values.any((user) => user.loggedIn);
   }
 }

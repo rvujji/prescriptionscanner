@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:logging/logging.dart';
 import 'hive_service.dart';
@@ -69,7 +68,10 @@ class PrescriptionParser {
       medications: medications,
       notes: 'Automatically scanned prescription',
       imagePath: imagePath,
-      userEmail: HiveService.getLoggedInUser()?.email ?? 'unknown',
+      userId: HiveService.getLoggedInUser()?.id ?? 'unknown',
+      isSynced: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
 
     _logger.info(
@@ -92,6 +94,11 @@ class PrescriptionParser {
       dosage: dosage,
       times: times,
       duration: duration,
+      frontImagePath: null,
+      backImagePath: null,
+      isSynced: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
   }
 

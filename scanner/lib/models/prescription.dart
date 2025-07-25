@@ -8,35 +8,37 @@ part 'prescription.g.dart'; // For Hive TypeAdapter
 @JsonSerializable()
 class Prescription extends HiveObject {
   @HiveField(0)
-  @JsonKey(name: 'id')
   String id;
 
   @HiveField(1)
-  @JsonKey(name: 'date')
   DateTime date;
 
   @HiveField(2)
-  @JsonKey(name: 'patient_name')
   String patientName;
 
   @HiveField(3)
-  @JsonKey(name: 'doctor_name')
   String doctorName;
 
   @HiveField(4)
-  @JsonKey(name: 'medications')
   List<Medication> medications;
 
   @HiveField(5)
-  @JsonKey(name: 'notes')
   String notes;
 
   @HiveField(6)
   String imagePath;
 
   @HiveField(7)
-  @JsonKey(name: 'userEmail')
-  String userEmail;
+  String userId;
+
+  @HiveField(8)
+  bool isSynced;
+
+  @HiveField(9)
+  DateTime? createdAt;
+
+  @HiveField(10)
+  DateTime? updatedAt;
 
   Prescription({
     required this.id,
@@ -46,7 +48,10 @@ class Prescription extends HiveObject {
     required this.medications,
     required this.notes,
     required this.imagePath,
-    required this.userEmail, // Add to constructor
+    required this.userId,
+    this.isSynced = false,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory Prescription.fromJson(Map<String, dynamic> json) =>
@@ -62,7 +67,10 @@ class Prescription extends HiveObject {
     List<Medication>? medications,
     String? notes,
     String? imagePath,
-    String? userEmail, // Add here
+    String? userId,
+    bool? isSynced,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Prescription(
       id: id ?? this.id,
@@ -72,7 +80,10 @@ class Prescription extends HiveObject {
       medications: medications ?? this.medications,
       notes: notes ?? this.notes,
       imagePath: imagePath ?? this.imagePath,
-      userEmail: userEmail ?? this.userEmail,
+      userId: userId ?? this.userId,
+      isSynced: isSynced ?? this.isSynced,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

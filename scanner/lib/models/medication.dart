@@ -27,6 +27,15 @@ class Medication {
   @HiveField(6)
   String? backImagePath;
 
+  @HiveField(7)
+  bool isSynced;
+
+  @HiveField(8)
+  DateTime? createdAt;
+
+  @HiveField(9)
+  DateTime? updatedAt;
+
   Medication({
     String? id, // Make optional for creation
     required this.name,
@@ -35,6 +44,9 @@ class Medication {
     required this.duration,
     this.frontImagePath,
     this.backImagePath,
+    this.isSynced = false,
+    this.createdAt,
+    this.updatedAt,
   }) : id = id ?? const Uuid().v4(); // Generate ID if not provided
 
   factory Medication.fromJson(Map<String, dynamic> json) =>
@@ -49,6 +61,9 @@ class Medication {
     DurationPeriod? duration,
     String? frontImagePath,
     String? backImagePath,
+    bool? isSynced,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Medication(
       id: id ?? this.id, // Include ID in copyWith
@@ -58,6 +73,9 @@ class Medication {
       duration: duration ?? this.duration,
       frontImagePath: frontImagePath ?? this.frontImagePath,
       backImagePath: backImagePath ?? this.backImagePath,
+      isSynced: isSynced ?? this.isSynced,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
