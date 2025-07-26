@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
-
+import 'package:uuid/uuid.dart';
 import '../services/hive_service.dart';
 import '../models/prescription.dart';
+import '../models/appuser.dart';
 import '../services/scanner_service.dart';
+import 'prescription_manual.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
@@ -143,6 +145,13 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   FloatingActionButton(
+                    heroTag: 'manual',
+                    onPressed: _manualEntry,
+                    tooltip: 'Add Manually',
+                    child: const Icon(Icons.edit_note), // ✍️ Manual Entry Icon
+                  ),
+                  const SizedBox(height: 16),
+                  FloatingActionButton(
                     heroTag: 'camera',
                     onPressed: _scanFromCamera,
                     tooltip: 'Scan from Camera',
@@ -190,5 +199,48 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _manualEntry() async {
+    // Create a new empty prescription
+    AppUser? loggedinUser = HiveService.getLoggedInUser();
+    final newPrescription = Prescription(
+      id: const Uuid().v4(),
+      date: DateTime.now(),
+      patientName: '',
+      doctorName: '',
+      medications: [],
+      notes: '',
+      imagePath: '',
+      userId: loggedinUser?.id ?? '',
+      isSynced: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    // Navigate to the editing screen
+    final updatedPrescription = await Navigator.push<Prescription>(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) =>
+                PrescriptionEditorScreen(prescription: newPrescription),
+      ),
+    );
+
+    if (updatedPrescription != null) {
+      try {
+        setState(() => _isLoading = true);
+        await HiveService.savePrescription(updatedPrescription);
+        _logger.info('Manual prescription saved: ${updatedPrescription.id}');
+        setState(() => _prescriptions.add(updatedPrescription));
+        Navigator.pop(context, updatedPrescription);
+      } catch (e, stack) {
+        _logger.severe('Manual entry failed: $e', e, stack);
+        _showError('Failed to save manual prescription: $e');
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }
