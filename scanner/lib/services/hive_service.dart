@@ -65,7 +65,7 @@ class HiveService {
                 duration: m.duration,
                 frontImagePath: m.frontImagePath,
                 backImagePath: m.backImagePath,
-                isSynced: m.isSynced,
+                isSynced: false, //m.isSynced,
                 createdAt: m.createdAt ?? DateTime.now(),
                 updatedAt: m.updatedAt ?? DateTime.now(),
               );
@@ -85,7 +85,7 @@ class HiveService {
       );
 
       _logger.info('Prescription [${prescription.id}] saved successfully.');
-      SyncService().syncPrescriptions();
+      await SyncService().syncPrescriptions();
     } catch (e, stackTrace) {
       _logger.severe(
         'Error saving prescription [${prescription.id}]: $e',

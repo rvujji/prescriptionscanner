@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'hive_service.dart';
 import '../models/prescription.dart';
 import '../models/medication.dart';
+import 'package:uuid/uuid.dart';
 
 final Logger _logger = Logger('PrescriptionParser');
 
@@ -62,7 +63,7 @@ class PrescriptionParser {
     }
 
     final prescription = Prescription(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: Uuid().v4(),
       date: DateTime.now(),
       patientName: patientName.isNotEmpty ? patientName : 'Unknown Patient',
       doctorName: doctorName.isNotEmpty ? doctorName : 'Unknown Doctor',

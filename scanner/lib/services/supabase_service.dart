@@ -15,6 +15,9 @@ class SupabaseService {
       await Supabase.initialize(
         url: 'https://twnibexumjlbuxrmsftv.supabase.co',
         anonKey: 'sb_publishable_LObZcMtrXUImhTlSKF4-rQ_RAaxWYum',
+        authOptions: FlutterAuthClientOptions(
+          authFlowType: AuthFlowType.pkce, // Required for mobile
+        ),
       );
       _initialized = true;
       print('[SupabaseService] Supabase initialized successfully');

@@ -4,8 +4,8 @@ import 'package:camera/camera.dart';
 import '../prescription_list.dart';
 import '../../services/hive_service.dart';
 import '../../services/medication_scheduler.dart';
-import '../../services/notification_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../../auth/google_signin.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onRegisterTap;
@@ -38,8 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final medicationScheduler = MedicationScheduler(
       HiveService.getPrescriptionBox(),
     );
-    final notificationService = NotificationService();
-    await notificationService.initialize(onTap: (payload) {});
+
     await medicationScheduler.initialize();
     await medicationScheduler.scheduleAllMedications();
     Navigator.pushReplacement(
@@ -144,6 +143,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: Icon(Icons.login, color: Colors.red),
+                    label: Text("Continue with Google"),
+                    onPressed: _signInWithGoogle,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -160,5 +168,46 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  void _signInWithGoogle() async {
+    final googleService = GoogleSignInService();
+    try {
+      final account = await googleService.signIn();
+      if (account == null) {
+        _showError("Google sign-in canceled");
+        return;
+      }
+
+      final email = account.email;
+      final displayName = account.displayName ?? "";
+      final photoUrl = account.photoUrl;
+
+      // You can store or validate user here using Hive or Supabase
+      print("✅ Google user signed in: $email");
+
+      final cameras = await availableCameras();
+      final FlutterTts flutterTts = FlutterTts();
+      await flutterTts.setLanguage("en-US");
+      await flutterTts.setSpeechRate(0.5);
+      final medicationScheduler = MedicationScheduler(
+        HiveService.getPrescriptionBox(),
+      );
+
+      await medicationScheduler.initialize();
+      await medicationScheduler.scheduleAllMedications();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => PrescriptionListScreen(
+                initialPrescriptions: HiveService.getAllPrescriptions(),
+                cameras: cameras,
+              ),
+        ),
+      );
+    } catch (e) {
+      _showError(e.toString());
+    }
   }
 }

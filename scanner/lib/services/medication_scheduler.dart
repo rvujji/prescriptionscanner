@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 import 'notification_service.dart';
 import '../models/prescription.dart';
 import 'dart:developer' as developer;
-import '../utilities/alarms_info.dart';
+import '../utils/alarms_info.dart';
 
 class MedicationScheduler {
   final NotificationService _notificationService = NotificationService();

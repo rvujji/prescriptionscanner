@@ -21,50 +21,76 @@ class SyncService {
     // Upload unsynced Hive users to Supabase
     for (final user in unsynced) {
       try {
-        await _supabase.from('app_users').upsert(user.toJson());
+        final userJson = user.toJson();
+        userJson['issynced'] = true;
+        await _supabase.from('app_users').upsert(userJson);
         user.isSynced = true;
         user.updatedAt = DateTime.now();
         await user.save();
+        print('✅ User ${user.id} synced successfully');
       } catch (e) {
         print('❌ Failed to sync user ${user.email}: $e');
       }
     }
-
-    // Download any new server users (optional)
-    final response = await _supabase
-        .from('app_users')
-        .select()
-        .neq('issynced', false);
-
-    for (final record in response) {
-      final remoteUser = AppUser.fromJson(record);
-      if (!box.values.any((u) => u.id == remoteUser.id)) {
-        await box.put(remoteUser.id, remoteUser);
-      }
-    }
+    //users cant be synced back from server to client
   }
 
-  /// 🔄 Sync Prescriptions
+  //sync oauth users
+  // Future<void> syncOauthUsers(AppUser user) async {
+  //   await _supabase.from('app_users').upsert({
+  //     'id': user?.id,
+  //     'email': user?.email,
+  //     'name': user?.userMetadata?['name'] ?? '',
+  //     'issynced': true,
+  //   });
+  // }
+
   /// 🔄 Sync Prescriptions with embedded medications
   Future<void> syncPrescriptions() async {
-    final box = await Hive.openBox<Prescription>('prescriptions');
+    final box = await Hive.openBox<Prescription>(
+      HiveService.prescriptionBoxName,
+    );
     final unsynced = box.values.where((p) => !p.isSynced).toList();
 
     for (final p in unsynced) {
       try {
         final prescriptionJson = p.toJson();
+        prescriptionJson['issynced'] = true;
         // Convert medications to JSON for Supabase
         prescriptionJson['medications'] =
             p.medications.map((m) => m.toJson()).toList();
 
         await _supabase.from('prescriptions').upsert(prescriptionJson);
-
         p.isSynced = true;
         p.updatedAt = DateTime.now();
         await p.save();
+        print('✅ Prescription ${p.id} synced successfully');
       } catch (e) {
         print('❌ Failed to sync prescription ${p.id}: $e');
       }
+    }
+
+    // 🗑️ Delete prescriptions from Supabase that no longer exist in Hive
+    try {
+      final cloudPrescriptions = await _supabase
+          .from('prescriptions')
+          .select('id');
+
+      final cloudIds =
+          cloudPrescriptions.map((p) => p['id'].toString()).toSet();
+      final localIds = box.values.map((p) => p.id).toSet();
+      final idsToDelete = cloudIds.difference(localIds);
+
+      for (final id in idsToDelete) {
+        try {
+          await _supabase.from('prescriptions').delete().eq('id', id);
+          print('🗑️ Deleted prescription $id from Supabase');
+        } catch (e) {
+          print('❌ Failed to delete prescription $id: $e');
+        }
+      }
+    } catch (e) {
+      print('❌ Failed to fetch cloud prescriptions for deletion sync: $e');
     }
 
     // Download prescriptions with medications embedded

@@ -111,3 +111,20 @@ If you use Supabase Storage:
 - Never expose `service_role` key in frontend/mobile apps.
 - Never leave RLS **disabled** on sensitive tables.
 - Never allow wildcard `SELECT` or `INSERT` policies.
+
+D:\prescriptionscanner\prescriptionscanner>keytool -list -v -keystore "C:\Users\rvujj\.android\debug.keystore" -alias androiddebugkey -storepass android -keypass android
+Alias name: androiddebugkey
+Creation date: 17 Dec 2024
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: C=US, O=Android, CN=Android Debug
+Issuer: C=US, O=Android, CN=Android Debug
+Serial number: 1
+Valid from: Tue Dec 17 21:54:04 IST 2024 until: Thu Dec 10 21:54:04 IST 2054
+Certificate fingerprints:
+SHA1: F7:73:80:65:91:DA:BA:81:FE:67:87:DD:D8:35:FC:5C:6D:2A:EB:DF
+SHA256: 56:AB:27:68:1D:08:8D:DA:04:0B:A1:22:8B:05:7B:8D:A2:BE:2C:B5:D6:A5:F0:3C:E7:73:9E:48:92:4F:61:85
+Signature algorithm name: SHA256withRSA
+Subject Public Key Algorithm: 2048-bit RSA key
+Version: 1
