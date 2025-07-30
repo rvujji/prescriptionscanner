@@ -179,13 +179,6 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final email = account.email;
-      final displayName = account.displayName ?? "";
-      final photoUrl = account.photoUrl;
-
-      // You can store or validate user here using Hive or Supabase
-      print("✅ Google user signed in: $email");
-
       final cameras = await availableCameras();
       final FlutterTts flutterTts = FlutterTts();
       await flutterTts.setLanguage("en-US");

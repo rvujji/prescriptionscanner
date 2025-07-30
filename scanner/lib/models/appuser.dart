@@ -81,4 +81,40 @@ class AppUser extends HiveObject {
       _$AppUserFromJson(json);
 
   Map<String, dynamic> toJson() => _$AppUserToJson(this);
+
+  AppUser copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? passwordHash,
+    String? phone,
+    DateTime? dob,
+    String? gender,
+    String? country,
+    bool? loggedIn,
+    String? accessToken,
+    String? refreshToken,
+    DateTime? tokenExpiry,
+    bool? isSynced,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      passwordHash: passwordHash ?? this.passwordHash,
+      phone: phone ?? this.phone,
+      dob: dob ?? this.dob,
+      gender: gender ?? this.gender,
+      country: country ?? this.country,
+      loggedIn: loggedIn ?? this.loggedIn,
+      accessToken: accessToken ?? this.accessToken,
+      refreshToken: refreshToken ?? this.refreshToken,
+      tokenExpiry: tokenExpiry ?? this.tokenExpiry,
+      isSynced: isSynced ?? this.isSynced,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }

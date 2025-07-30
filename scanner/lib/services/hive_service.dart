@@ -8,6 +8,7 @@ import '../models/appuser.dart';
 import '../utils/password_manager.dart';
 import 'medication_scheduler.dart';
 import 'sync_hive_supabase.dart';
+import '../auth/google_signin.dart';
 
 final Logger _logger = Logger('HiveService');
 
@@ -40,6 +41,10 @@ class HiveService {
 
   static Box<Prescription> getPrescriptionBox() {
     return Hive.box<Prescription>(prescriptionBoxName);
+  }
+
+  static Box<AppUser> getUserBox() {
+    return Hive.box<AppUser>(userBoxName);
   }
 
   static Future<void> savePrescription(Prescription prescription) async {
@@ -136,10 +141,6 @@ class HiveService {
     }
   }
 
-  static Box<AppUser> getUserBox() {
-    return Hive.box<AppUser>(userBoxName);
-  }
-
   static Future<void> saveUser(AppUser user) async {
     try {
       _logger.info('Saving user with Email ID: ${user.name}');
@@ -184,7 +185,7 @@ class HiveService {
   }
 
   static Future<void> validateUser(String emailOrPhone, String password) async {
-    final usersBox = Hive.box<AppUser>(userBoxName);
+    final usersBox = getUserBox();
     final hashedPassword = PasswordUtils.hashPassword(password);
     AppUser? user = usersBox.values.firstWhere(
       (u) =>
@@ -200,17 +201,20 @@ class HiveService {
   }
 
   static Future<void> logout() async {
-    final box = Hive.box<AppUser>(userBoxName);
+    final box = getUserBox();
     for (final user in box.values) {
       if (user.loggedIn) {
         user.loggedIn = false;
         await user.save(); // Save updated state
       }
     }
+    final googleService = GoogleSignInService();
+    await googleService.signOut();
+    _logger.info('User logged out successfully.');
   }
 
   static AppUser? getLoggedInUser() {
-    final box = Hive.box<AppUser>(userBoxName);
+    final box = getUserBox();
     return box.values.firstWhere(
       (user) => user.loggedIn,
       orElse: () => null as AppUser,
@@ -218,7 +222,7 @@ class HiveService {
   }
 
   static Future<bool> isLoggedIn() async {
-    final box = Hive.box<AppUser>(userBoxName);
+    final box = getUserBox();
     return box.values.any((user) => user.loggedIn);
   }
 }
