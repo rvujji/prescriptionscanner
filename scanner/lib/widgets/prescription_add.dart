@@ -8,6 +8,7 @@ import '../models/prescription.dart';
 import '../models/appuser.dart';
 import '../services/scanner_service.dart';
 import 'prescription_manual.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
@@ -148,7 +149,7 @@ class _PrescriptionAddPageState extends State<PrescriptionAddPage> {
                     heroTag: 'manual',
                     onPressed: _manualEntry,
                     tooltip: 'Add Manually',
-                    child: const Icon(Icons.edit_note), // ✍️ Manual Entry Icon
+                    child: const Icon(Icons.edit_note), 
                   ),
                   const SizedBox(height: 16),
                   FloatingActionButton(

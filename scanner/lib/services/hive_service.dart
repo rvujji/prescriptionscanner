@@ -215,10 +215,8 @@ class HiveService {
 
   static AppUser? getLoggedInUser() {
     final box = getUserBox();
-    return box.values.firstWhere(
-      (user) => user.loggedIn,
-      orElse: () => null as AppUser,
-    );
+    final loggedInUsers = box.values.where((user) => user.loggedIn);
+    return loggedInUsers.isNotEmpty ? loggedInUsers.first : null;
   }
 
   static Future<bool> isLoggedIn() async {

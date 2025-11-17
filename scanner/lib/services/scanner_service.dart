@@ -15,7 +15,7 @@ abstract class PrescriptionScanner {
 class MLKitPrescriptionScanner implements PrescriptionScanner {
   @override
   Future<String?> scanImage(String imagePath) async {
-    final textRecognizer = TextRecognizer();
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
       _logger.info('Starting OCR for image: $imagePath');
       final inputImage = InputImage.fromFilePath(imagePath);

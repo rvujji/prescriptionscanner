@@ -4,6 +4,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
+
 android {
     namespace = "com.vuzi.scanner"
     compileSdk = flutter.compileSdkVersion.toInt()
@@ -16,11 +18,17 @@ android {
         targetSdk = flutter.targetSdkVersion.toInt()
         versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
+        setProperty("archivesBaseName", "Scanner-${versionName}-${versionCode}")
     }
 
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            proguardFiles(
+getDefaultProguardFile("proguard-android-optimize.txt"),
+"proguard-rules.pro"
+)
         }
     }
 
