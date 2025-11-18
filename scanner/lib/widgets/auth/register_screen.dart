@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../services/hive_service.dart';
-import '../../models/appuser.dart';
+import '../../services/auth_service.dart';
 import '../../utils/password_manager.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -36,34 +33,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showError("Please fill all fields including DOB, Gender, and Country");
       return;
     }
-    final hashedPassword = PasswordUtils.hashPassword(passwordController.text);
 
-    final appUser = AppUser(
-      id: const Uuid().v4(),
+    final authService = AuthService();
+    final newUser = await authService.registerUser(
       name: nameController.text.trim(),
       email: emailController.text.trim(),
-      passwordHash: hashedPassword,
       phone: phoneController.text.trim(),
+      password: passwordController.text,
+      passwordHash: PasswordUtils.hashPassword( passwordController.text),
       dob: dob!,
       gender: gender!,
       country: country!,
-      loggedIn: false,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
     );
 
-    try {
-      await HiveService.saveUser(appUser);
-    } catch (e) {
-      _showError("Failed to save user: $e");
-      return;
+    if (newUser != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Registered as ${newUser.name}")));
+      Navigator.pop(context);
+    } else {
+      _showError("Registration failed. The user may already exist.");
     }
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Registered as ${appUser.name}")));
-
-    Navigator.pop(context);
   }
 
   void _pickDob() async {

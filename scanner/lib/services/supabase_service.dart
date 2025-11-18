@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'database_service.dart';
 
-class SupabaseService {
+class SupabaseService implements DatabaseService<SupabaseClient> {
   static final SupabaseService _instance = SupabaseService._internal();
 
   factory SupabaseService() => _instance;
@@ -9,6 +10,7 @@ class SupabaseService {
 
   bool _initialized = false;
 
+  @override
   Future<void> initialize() async {
     if (_initialized) return;
     try {
@@ -27,10 +29,20 @@ class SupabaseService {
     }
   }
 
+  @override
   SupabaseClient get client {
     if (!_initialized) {
       throw Exception('Supabase not initialized. Call initialize() first.');
     }
     return Supabase.instance.client;
+  }
+
+  @override
+  Future<void> close() async {
+    if (_initialized) {
+      await client.dispose();
+      _initialized = false;
+      print('[SupabaseService] Supabase client disposed.');
+    }
   }
 }

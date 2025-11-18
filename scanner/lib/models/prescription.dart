@@ -48,6 +48,10 @@ class Prescription extends HiveObject {
   @JsonKey(name: 'updatedat')
   DateTime? updatedAt;
 
+  @HiveField(11)
+  @JsonKey(name: 'isarchived')
+  bool isArchived;
+
   Prescription({
     String? id,
     required this.date,
@@ -58,6 +62,7 @@ class Prescription extends HiveObject {
     required this.imagePath,
     required this.userId,
     this.isSynced = false,
+    this.isArchived = false,
     this.createdAt,
     this.updatedAt,
   }) : id = id ?? const Uuid().v4();
@@ -77,6 +82,7 @@ class Prescription extends HiveObject {
     String? imagePath,
     String? userId,
     bool? isSynced,
+    bool? isArchived,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -90,6 +96,7 @@ class Prescription extends HiveObject {
       imagePath: imagePath ?? this.imagePath,
       userId: userId ?? this.userId,
       isSynced: isSynced ?? this.isSynced,
+      isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

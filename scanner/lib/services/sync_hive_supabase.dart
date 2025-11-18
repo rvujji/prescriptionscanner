@@ -1,115 +1,150 @@
+import 'package:dio/dio.dart';
 import 'package:hive/hive.dart';
 import '../models/appuser.dart';
 import '../models/prescription.dart';
 import '../models/medication.dart';
 import '../services/hive_service.dart';
-import '../services/supabase_service.dart';
+import '../services/postgreslocal_service.dart';
 
 class SyncService {
-  final _supabase = SupabaseService().client;
+  late final Dio _dio;
+
+  SyncService() {
+    _dio = PostgresLocalService().client;
+  }
 
   Future<void> syncAll() async {
     await syncUsers();
     await syncPrescriptions();
   }
 
-  /// 🔄 Sync AppUsers
+  // ----------------------------------------------------------
+  // SYNC USERS
+  // ----------------------------------------------------------
   Future<void> syncUsers() async {
     final box = await Hive.openBox<AppUser>(HiveService.userBoxName);
     final unsynced = box.values.where((u) => !u.isSynced).toList();
 
-    // Upload unsynced Hive users to Supabase
     for (final user in unsynced) {
       try {
         final userJson = user.toJson();
-        userJson['issynced'] = true;
-        await _supabase.from('app_users').upsert(userJson);
+
+        // Remove fields the DB fills automatically
+        userJson.remove('createdAt');
+        userJson.remove('updatedAt');
+        userJson['issynced'] = true; // Make sure name matches DB column
+
+        final response = await _dio.post(
+          '/app_users',
+          data: userJson,
+          options: Options(
+            headers: {
+              'Prefer': 'resolution=merge-duplicates,return=representation',
+            },
+          ),
+        );
+
+        print("▶ POST /app_users => ${response.statusCode}");
+
         user.isSynced = true;
         user.updatedAt = DateTime.now();
         await user.save();
+
         print('✅ User ${user.id} synced successfully');
       } catch (e) {
         print('❌ Failed to sync user ${user.email}: $e');
       }
     }
-    //users cant be synced back from server to client
   }
 
-  //sync oauth users
-  // Future<void> syncOauthUsers(AppUser user) async {
-  //   await _supabase.from('app_users').upsert({
-  //     'id': user?.id,
-  //     'email': user?.email,
-  //     'name': user?.userMetadata?['name'] ?? '',
-  //     'issynced': true,
-  //   });
-  // }
-
-  /// 🔄 Sync Prescriptions with embedded medications
+  // ----------------------------------------------------------
+  // SYNC PRESCRIPTIONS
+  // ----------------------------------------------------------
   Future<void> syncPrescriptions() async {
-    final box = await Hive.openBox<Prescription>(
-      HiveService.prescriptionBoxName,
-    );
+    final box = await Hive.openBox<Prescription>(HiveService.prescriptionBoxName);
     final unsynced = box.values.where((p) => !p.isSynced).toList();
 
     for (final p in unsynced) {
       try {
-        final prescriptionJson = p.toJson();
-        prescriptionJson['issynced'] = true;
-        // Convert medications to JSON for Supabase
-        prescriptionJson['medications'] =
-            p.medications.map((m) => m.toJson()).toList();
+        final json = p.toJson();
+        json['issynced'] = true;
 
-        await _supabase.from('prescriptions').upsert(prescriptionJson);
+        final response = await _dio.post(
+          '/prescriptions',
+          data: json,
+          options: Options(
+            headers: {
+              'Prefer': 'resolution=merge-duplicates,return=representation',
+            },
+          ),
+        );
+
+        print("▶ POST /prescriptions => ${response.statusCode}");
+
         p.isSynced = true;
         p.updatedAt = DateTime.now();
         await p.save();
+
         print('✅ Prescription ${p.id} synced successfully');
       } catch (e) {
         print('❌ Failed to sync prescription ${p.id}: $e');
       }
     }
 
-    // 🗑️ Delete prescriptions from Supabase that no longer exist in Hive
+    // ----------------------------------------------------------
+    // CLEANUP / ARCHIVE LOGIC
+    // ----------------------------------------------------------
     try {
-      final cloudPrescriptions = await _supabase
-          .from('prescriptions')
-          .select('id');
+      final response = await _dio.get('/prescriptions?isarchived=eq.false&select=id');
+      final cloudIds = (response.data as List)
+          .map((p) => p['id'].toString())
+          .toSet();
 
-      final cloudIds =
-          cloudPrescriptions.map((p) => p['id'].toString()).toSet();
-      final localIds = box.values.map((p) => p.id).toSet();
-      final idsToDelete = cloudIds.difference(localIds);
+      final localIds = box.values
+          .where((p) => !p.isArchived)
+          .map((p) => p.id)
+          .toSet();
 
-      for (final id in idsToDelete) {
+      final idsToArchive = cloudIds.difference(localIds);
+
+      for (final id in idsToArchive) {
         try {
-          await _supabase.from('prescriptions').delete().eq('id', id);
-          print('🗑️ Deleted prescription $id from Supabase');
+          await _dio.patch(
+            '/prescriptions?id=eq.$id',
+            data: {'isarchived': true, 'issynced': true},
+          );
+          print('🗑️ Archived prescription $id');
         } catch (e) {
-          print('❌ Failed to delete prescription $id: $e');
+          print('❌ Failed to archive prescription $id: $e');
         }
       }
     } catch (e) {
-      print('❌ Failed to fetch cloud prescriptions for deletion sync: $e');
+      print('❌ Failed to fetch cloud prescriptions for archival sync: $e');
     }
 
-    // Download prescriptions with medications embedded
-    final response = await _supabase.from('prescriptions').select();
+    // ----------------------------------------------------------
+    // DOWNLOAD CLOUD → LOCAL
+    // ----------------------------------------------------------
+    try {
+      final response = await _dio.get('/prescriptions?isarchived=eq.false');
+      final records = response.data as List;
 
-    for (final record in response) {
-      final prescription = Prescription.fromJson(record);
-      // Deserialize embedded medications
-      if (record['medications'] != null) {
-        final meds =
-            (record['medications'] as List)
-                .map((json) => Medication.fromJson(json))
-                .toList();
-        prescription.medications = meds;
-      }
+      for (final record in records) {
+        final prescription = Prescription.fromJson(record);
 
-      if (!box.values.any((p) => p.id == prescription.id)) {
-        await box.put(prescription.id, prescription);
+        // Make sure medications list is parsed
+        if (record['medications'] is List) {
+          prescription.medications = (record['medications'] as List)
+              .map((m) => Medication.fromJson(m as Map<String, dynamic>))
+              .toList();
+        }
+
+        if (!box.values.any((p) => p.id == prescription.id)) {
+          await box.put(prescription.id, prescription);
+        }
       }
+    } catch (e) {
+      print('❌ Failed to download prescriptions: $e');
     }
   }
 }

@@ -3,7 +3,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:io';
 import '../services/hive_service.dart';
-import '../services/supabase_service.dart';
+import '../services/postgreslocal_service.dart';
 import '../services/notification_service.dart';
 
 class AppInitializer {
@@ -12,7 +12,7 @@ class AppInitializer {
     final notificationService = NotificationService();
     await notificationService.initialize(onTap: (payload) {});
     await HiveService.init();
-    await SupabaseService().initialize();
+    await PostgresLocalService().initialize();
     await requestNotificationPermission();
     await requestExactAlarmPermission();
   }

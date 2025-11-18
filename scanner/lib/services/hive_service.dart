@@ -48,6 +48,8 @@ class HiveService {
   }
 
   static Future<void> savePrescription(Prescription prescription) async {
+     // Log or display in your app
+
     final box = getPrescriptionBox();
 
     try {
@@ -79,6 +81,7 @@ class HiveService {
         imagePath: prescription.imagePath,
         userId: prescription.userId,
         isSynced: prescription.isSynced,
+        isArchived: prescription.isArchived,
         createdAt: prescription.createdAt ?? DateTime.now(),
         updatedAt: prescription.updatedAt ?? DateTime.now(),
       );
@@ -111,7 +114,7 @@ class HiveService {
       }
       final prescriptions =
           box.values
-              .where((prescription) => prescription.userId == loggedInUser.id)
+              .where((prescription) => prescription.userId == loggedInUser.id && !prescription.isArchived)
               .toList();
       _logger.fine('Retrieved ${prescriptions.length} prescriptions.');
       return prescriptions;
@@ -125,23 +128,38 @@ class HiveService {
     final box = getPrescriptionBox();
 
     try {
-      _logger.info('Attempting to delete prescription with ID: $id');
-      final index = box.values.toList().indexWhere((p) => p.id == id);
+      _logger.info('Attempting to archive prescription with ID: $id');
+      final prescription = box.get(id);
 
-      if (index != -1) {
-        await box.deleteAt(index);
-        _logger.info('Prescription [$id] deleted.');
+      if (prescription != null) {
+        prescription.isArchived = true;
+        prescription.isSynced = false;
+        await prescription.save();
+        _logger.info('Prescription [$id] archived.');
         SyncService().syncPrescriptions();
       } else {
-        _logger.warning('Prescription with ID $id not found for deletion.');
+        _logger.warning('Prescription with ID $id not found for archival.');
       }
     } catch (e, stackTrace) {
-      _logger.severe('Error deleting prescription [$id]: $e', e, stackTrace);
+      _logger.severe('Error archiving prescription [$id]: $e', e, stackTrace);
       rethrow;
     }
   }
 
   static Future<void> saveUser(AppUser user) async {
+    await saveRegisteredUserToHive(user);
+    /// todo: comment after development
+    final hbox = Hive.box('userBoxName');
+// Get all data as a list:
+    List allData = hbox.keys.map((key) {
+      final value = hbox.get(key);
+      return { "key": key, "value": value };
+    }).toList();
+    print(allData);
+    SyncService().syncUsers();
+  }
+
+  static Future<void> saveRegisteredUserToHive(AppUser user) async {
     try {
       _logger.info('Saving user with Email ID: ${user.name}');
       final usersBox = getUserBox();
@@ -172,11 +190,10 @@ class HiveService {
         updatedAt: user.updatedAt ?? DateTime.now(),
       );
       await usersBox.put(userCopy.id, userCopy);
-      _logger.info('User [${user.name}] saved successfully.');
-      SyncService().syncUsers();
+      _logger.info('User [${user.name}] saved successfully to Hive.');
     } catch (e, stackTrace) {
       _logger.severe(
-        'Error saving prescription [${user.name}]: $e',
+        'Error saving user [${user.name}]: $e',
         e,
         stackTrace,
       );
@@ -186,6 +203,15 @@ class HiveService {
 
   static Future<void> validateUser(String emailOrPhone, String password) async {
     final usersBox = getUserBox();
+    // todo: comment after development
+    final hbox = getUserBox();
+// Get all data as a list:
+    List allData = hbox.keys.map((key) {
+      final value = hbox.get(key);
+      return { "key": key, "value": value };
+    }).toList();
+    print("users allData");
+    print(allData);
     final hashedPassword = PasswordUtils.hashPassword(password);
     AppUser? user = usersBox.values.firstWhere(
       (u) =>
@@ -208,6 +234,15 @@ class HiveService {
         await user.save(); // Save updated state
       }
     }
+    /// todo: comment after development
+    final hbox = Hive.box('userBoxName');
+    // Get all data as a list:
+    List allData = hbox.keys.map((key) {
+      final value = hbox.get(key);
+      return { "key": key, "value": value };
+    }).toList();
+    print(allData);
+
     final googleService = GoogleSignInService();
     await googleService.signOut();
     _logger.info('User logged out successfully.');
